@@ -570,9 +570,14 @@ function loadFromRaw(raw) {
       type:  guessType(a),
     }));
     recalcBlocsKJ(rides);
+    // Construire/mettre à jour les blocs dynamiquement
+    if (raw.events) buildDynamicBlocs(rides, raw.events);
+    else buildDynamicBlocs(rides, []);
   }
+}
 
-  // ── Events ICU → mise à jour automatique des jours prévus ─────
+function _placeholder_events() {
+  // ── Events ICU → déjà gérés dans buildDynamicBlocs ───────────
   if (raw.events && Array.isArray(raw.events)) {
     raw.events.forEach(ev => {
       if (!ev.start_date_local) return;
@@ -631,25 +636,148 @@ function guessType(a) {
 }
 
 function recalcBlocsKJ(rides) {
-  // Recalcule les KJ réels de chaque bloc ISO depuis les activités live
+  const today = new Date().toISOString().split('T')[0];
   BLOCS.forEach(b => {
     const [d1, d2] = isoWeekRange(b.iso, 2026);
+    // Somme kJ réels (activités passées uniquement)
     const sum = rides
-      .filter(a => { const d = a.start_date_local?.split('T')[0]; return d >= d1 && d <= d2; })
+      .filter(a => {
+        const d = (a.start_date_local || '').split('T')[0];
+        return d >= d1 && d <= d2 && d < today;
+      })
       .reduce((s, a) => s + Math.round((a.icu_joules || 0) / 1000), 0);
     if (sum > 0) b.reel = sum;
-    // Mettre à jour aussi les jours individuels
+    // Mise à jour jour par jour
     b.days.forEach(day => {
       const iso = day2iso(day.j, b.iso);
-      if (!iso) return;
-      // Ne pas écraser les jours futurs (aujourd'hui et après)
-      const today = new Date().toISOString().split('T')[0];
-      if (iso > today) return;
-      const ride = rides.find(a => a.start_date_local?.startsWith(iso));
-      if (ride) day.r = Math.round((ride.icu_joules || 0) / 1000);
-      else if (iso < today && day.r === null) day.r = 0; // Jour passé sans activité = repos
+      if (!iso || iso >= today) return; // Ne pas toucher aux jours futurs
+      const dayRides = rides.filter(a => (a.start_date_local||'').split('T')[0] === iso);
+      day.r = dayRides.reduce((s, a) => s + Math.round((a.icu_joules||0)/1000), 0);
     });
   });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  CONSTRUCTION DYNAMIQUE DES BLOCS depuis ICU
+//  Appelée après loadFromRaw — construit les semaines manquantes
+// ═══════════════════════════════════════════════════════════════════
+function buildDynamicBlocs(activities, events) {
+  const today = new Date().toISOString().split('T')[0];
+  const todayDate = new Date(today);
+  
+  // Semaine ISO courante
+  const currentISO = getISOWeek(todayDate);
+  const currentYear = todayDate.getFullYear();
+  
+  // Map des activités par date
+  const actsByDate = {};
+  activities.forEach(a => {
+    const d = (a.start_date_local||'').split('T')[0];
+    if (!d) return;
+    if (!actsByDate[d]) actsByDate[d] = [];
+    actsByDate[d].push(a);
+  });
+  
+  // Map des events par date
+  const eventsByDate = {};
+  if (events) events.forEach(ev => {
+    const d = (ev.start_date_local||'').split('T')[0];
+    if (!d) return;
+    if (!eventsByDate[d]) eventsByDate[d] = [];
+    eventsByDate[d].push(ev);
+  });
+  
+  // Vérifier si le bloc de la semaine courante existe déjà
+  const existingIsos = BLOCS.map(b => b.iso);
+  if (!existingIsos.includes(currentISO)) {
+    // Créer le bloc de la semaine courante
+    const [d1, d2] = isoWeekRange(currentISO, currentYear);
+    const monDate = new Date(d1);
+    const days = [];
+    const JOURS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monDate);
+      d.setDate(monDate.getDate() + i);
+      const iso = d.toISOString().split('T')[0];
+      const dayNum = iso.split('-')[2];
+      const monthNum = iso.split('-')[1];
+      const j = `${JOURS[i]} ${dayNum}`;
+      
+      // Chercher activité réelle
+      const acts = actsByDate[iso] || [];
+      const kj = acts.reduce((s,a) => s + Math.round((a.icu_joules||0)/1000), 0);
+      
+      // Chercher event planifié
+      const evs = eventsByDate[iso] || [];
+      const ev = evs.find(e => e.type === 'Ride' || e.category === 'WORKOUT');
+      
+      let lab = ev ? ev.name : (kj > 0 ? acts[0]?.name || 'Sortie' : 'Repos');
+      let type = 'R';
+      if (kj > 0) {
+        type = guessType(acts[0] || {});
+      } else if (ev) {
+        const n = (ev.name||'').toLowerCase();
+        if (n.includes('sweet')||n.includes('ss')||n.includes('seuil')) type = 'SS';
+        else if (n.includes('z2')||n.includes('endurance')||n.includes('montagne')) type = 'Z2';
+        else if (n.includes('vo2')||n.includes('interval')||n.includes('côte')) type = 'A';
+        else if (n.includes('récup')||n.includes('repos')) type = 'R';
+        else type = 'Z2';
+      }
+      
+      days.push({
+        j, lab,
+        type,
+        r: iso < today ? kj : (iso === today && kj > 0 ? kj : null)
+      });
+    }
+    
+    // Marquer tous les anciens blocs comme non-current
+    BLOCS.forEach(b => { b.current = false; });
+    
+    BLOCS.push({
+      iso: currentISO,
+      dates: `${new Date(d1).getDate().toString().padStart(2,'0')}–${new Date(d2).getDate().toString().padStart(2,'0')}/${(new Date(d1).getMonth()+1).toString().padStart(2,'0')}`,
+      type: 'charge',
+      ordre: 'C1/3',
+      cible: 4200,
+      reel: null,
+      current: true,
+      days
+    });
+    
+    // Trier par iso
+    BLOCS.sort((a,b) => a.iso - b.iso);
+    S.weekNum = currentISO;
+  } else {
+    // Mettre à jour le bloc existant avec les events
+    const bloc = BLOCS.find(b => b.iso === currentISO);
+    if (bloc) {
+      bloc.current = true;
+      S.weekNum = currentISO;
+      bloc.days.forEach(day => {
+        const iso = day2iso(day.j, bloc.iso);
+        if (!iso || iso < today) return;
+        // Mettre à jour avec events ICU
+        const evs = eventsByDate[iso] || [];
+        const ev = evs.find(e => e.type === 'Ride' || e.category === 'WORKOUT');
+        if (ev && ev.name) {
+          day.lab = ev.name;
+          const n = ev.name.toLowerCase();
+          if (n.includes('sweet')||n.includes('ss')||n.includes('seuil')) day.type = 'SS';
+          else if (n.includes('z2')||n.includes('endurance')||n.includes('montagne')) day.type = 'Z2';
+          else if (n.includes('vo2')||n.includes('interval')) day.type = 'A';
+        }
+      });
+    }
+  }
+}
+
+function getISOWeek(date) {
+  const d = new Date(date);
+  d.setHours(0,0,0,0);
+  d.setDate(d.getDate() + 4 - (d.getDay()||7));
+  const yearStart = new Date(d.getFullYear(),0,1);
+  return Math.ceil((((d-yearStart)/86400000)+1)/7);
 }
 
 function isoWeekRange(week, year) {
