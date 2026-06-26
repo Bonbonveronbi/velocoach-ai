@@ -490,8 +490,15 @@ async function init() {
     if (!res.ok) throw new Error('worker ' + res.status);
     const raw = await res.json();
     if (raw.error) throw new Error(raw.error);
-    loadFromRaw({ wellness: raw.wellness, activities: raw.activities });
+    loadFromRaw({ wellness: raw.wellness, activities: raw.activities, events: raw.events || [] });
     if (raw.eftp) S.eftp = raw.eftp;
+    // Charger les blocs calculés par le Worker
+    if (raw.blocs && raw.blocs.length) {
+      BLOCS.length = 0;
+      raw.blocs.forEach(b => BLOCS.push(b));
+      const cur = BLOCS.find(b => b.current);
+      if (cur) S.weekNum = cur.iso;
+    }
     setStatus('ok');
     const h = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
     document.getElementById('sync-info').textContent = 'ICU live · mis à jour à ' + h;
@@ -570,9 +577,8 @@ function loadFromRaw(raw) {
       type:  guessType(a),
     }));
     recalcBlocsKJ(rides);
-    // Construire/mettre à jour les blocs dynamiquement
-    if (raw.events) buildDynamicBlocs(rides, raw.events);
-    else buildDynamicBlocs(rides, []);
+    // Les blocs sont maintenant construits par le Worker — updateFutureLabels en fallback
+    if (raw.events) updateFutureLabelsFromEvents(raw.events);
   }
 }
 
@@ -770,6 +776,28 @@ function buildDynamicBlocs(activities, events) {
       });
     }
   }
+}
+
+function updateFutureLabelsFromEvents(events) {
+  const today = new Date().toISOString().split('T')[0];
+  const bloc = BLOCS.find(b => b.current);
+  if (!bloc) return;
+  events.forEach(ev => {
+    if (!ev.start_date_local) return;
+    const evDate = ev.start_date_local.split('T')[0];
+    if (evDate < today) return; // Ignorer les events passés
+    const day = bloc.days.find(d => {
+      const iso = day2iso(d.j, bloc.iso);
+      return iso === evDate;
+    });
+    if (!day || day.r !== null) return; // Ne pas écraser les réalisés
+    if (ev.name) day.lab = ev.name;
+    const n = (ev.name||'').toLowerCase();
+    if (n.includes('sweet')||n.includes('ss')||n.includes('seuil')) day.type = 'SS';
+    else if (n.includes('z2')||n.includes('endurance')||n.includes('montagne')) day.type = 'Z2';
+    else if (n.includes('vo2')||n.includes('interval')) day.type = 'A';
+    else if (n.includes('récup')||n.includes('repos')) day.type = 'R';
+  });
 }
 
 function getISOWeek(date) {
