@@ -363,24 +363,24 @@ const BLOCS = [
     {j:'Sam 13',lab:'Lanobre',type:'A',r:1699},
     {j:'Dim 14',lab:'Repos',type:'R',r:0},
    ]},
-  {iso:25,dates:'15–21/06',type:'recup',ordre:'Récup',cible:3200,reel:3085,current:false,
+  {iso:25,dates:'15–21/06',type:'recup',ordre:'Récup',cible:3200,reel:3007,
    days:[
     {j:'Lun 15',lab:'Veyrières',type:'R',r:323},
     {j:'Mar 16',lab:'Veyrières',type:'R',r:619},
-    {j:'Mer 17',lab:'Z2 1h30',type:'Z2',r:35},
+    {j:'Mer 17',lab:'Z2 1h30',type:'Z2',r:null},
     {j:'Jeu 18',lab:'Repos',type:'R',r:0},
-    {j:'Ven 19',lab:'Veyrières',type:'R',r:145},
-    {j:'Sam 20',lab:'Bort-les-Orgues',type:'A',r:1513},
-    {j:'Dim 21',lab:'Repos total',type:'R',r:450},
+    {j:'Ven 19',lab:'Veyrières récup',type:'R',r:145},
+    {j:'Sam 20',lab:'Bort-les-Orgues',type:'A',r:1514},
+    {j:'Dim 21',lab:'Repos total',type:'R',r:0},
    ]},
-  {iso:26,dates:'22–28/06',type:'charge',ordre:'C1/3',cible:4200,reel:null,current:true,future:false,
+  {iso:26,dates:'22–28/06',type:'charge',ordre:'C1/4',cible:3800,reel:null,current:true,
    days:[
-    {j:'Lun 22',lab:'Sortie matin Z2',type:'Z2',r:583},
+    {j:'Lun 22',lab:'Z2 matin',type:'Z2',r:583},
     {j:'Mar 23',lab:'Repos',type:'R',r:0},
-    {j:'Mer 24',lab:'Night SS 3×10min',type:'SS',r:516},
-    {j:'Jeu 25',lab:'Z2 endurance 1h30',type:'Z2',r:749},
-    {j:'Ven 26',lab:'SS 2×20min seuil 1h (prévu)',type:'SS',r:null},
-    {j:'Sam 27',lab:'Z2 montagne 3h cols (prévu)',type:'Z2',r:null},
+    {j:'Mer 24',lab:'Sweet Spot 3×10',type:'SS',r:516},
+    {j:'Jeu 25',lab:'Z2 assimilation',type:'Z2',r:749},
+    {j:'Ven 26',lab:'Repos / Z1',type:'R',r:null},
+    {j:'Sam 27',lab:'Z2 longue 3h',type:'Z2',r:null},
     {j:'Dim 28',lab:'Repos',type:'R',r:null},
    ]},
 ];
@@ -404,57 +404,55 @@ const SEANCES_S25 = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════
-//  DONNÉES ICU — snapshot 16/06/2026 — générées par Claude via MCP
+//  DONNÉES ICU — snapshot 26/06/2026 — générées par Claude via MCP
 //  Pour actualiser : demander à Claude de régénérer le fichier
 // ═══════════════════════════════════════════════════════════════════
 const ICU_SNAPSHOT = {
-  generated: '2026-06-16',
-  eftp: 222,
+  generated: '2026-06-26',
+  eftp: 220,
   wellness: [
-    {date:'2026-05-28',ctl:60.1,atl:54.9,hrv:32,hrvSDNN:41,restingHR:47,readiness:7.4,sleepSecs:28560,sleepScore:5,vo2max:null},
-    {date:'2026-05-29',ctl:60.7,atl:58.8,hrv:53,hrvSDNN:61,restingHR:51,readiness:8.1,sleepSecs:28560,sleepScore:5,vo2max:52},
-    {date:'2026-05-30',ctl:63.8,atl:76.7,hrv:24,hrvSDNN:46,restingHR:47,readiness:7.1,sleepSecs:28380,sleepScore:4.2,vo2max:51},
-    {date:'2026-05-31',ctl:62.3,atl:66.5,hrv:38,hrvSDNN:40,restingHR:49,readiness:7.6,sleepSecs:28560,sleepScore:5,vo2max:49.8},
-    {date:'2026-06-01',ctl:64.9,atl:80.9,hrv:39,hrvSDNN:46,restingHR:45,readiness:7.7,sleepSecs:28560,sleepScore:5,vo2max:49.8},
-    {date:'2026-06-02',ctl:63.4,atl:70.1,hrv:27,hrvSDNN:35,restingHR:46,readiness:7.2,sleepSecs:28560,sleepScore:5,vo2max:49.7},
-    {date:'2026-06-03',ctl:66.7,atl:87.8,hrv:37,hrvSDNN:52,restingHR:47,readiness:7.6,sleepSecs:28560,sleepScore:5,vo2max:49.7},
-    {date:'2026-06-04',ctl:65.1,atl:76.1,hrv:29,hrvSDNN:50,restingHR:46,readiness:7.3,sleepSecs:28560,sleepScore:5,vo2max:49.7},
-    {date:'2026-06-05',ctl:65.1,atl:74.5,hrv:26,hrvSDNN:32,restingHR:47,readiness:7.2,sleepSecs:28560,sleepScore:5,vo2max:49.7},
-    {date:'2026-06-06',ctl:68.5,atl:92.7,hrv:35,hrvSDNN:32,restingHR:46,readiness:7.6,sleepSecs:28560,sleepScore:5,vo2max:49.7},
     {date:'2026-06-07',ctl:66.9,atl:80.3,hrv:38,hrvSDNN:44,restingHR:47,readiness:7.6,sleepSecs:28560,sleepScore:5,vo2max:49.7},
     {date:'2026-06-08',ctl:67.3,atl:80.7,hrv:30,hrvSDNN:48,restingHR:48,readiness:7.3,sleepSecs:28800,sleepScore:5,vo2max:49.7},
     {date:'2026-06-09',ctl:67.2,atl:78.5,hrv:31,hrvSDNN:34,restingHR:47,readiness:7.4,sleepSecs:28800,sleepScore:5,vo2max:50.7},
     {date:'2026-06-10',ctl:68.6,atl:84.8,hrv:41,hrvSDNN:41,restingHR:47,readiness:7.8,sleepSecs:28800,sleepScore:5,vo2max:50.8},
-    {date:'2026-06-11',ctl:67.0,atl:73.5,hrv:57,hrvSDNN:56,restingHR:49,readiness:8.2,sleepSecs:28800,sleepScore:5,vo2max:50.8},
-    {date:'2026-06-12',ctl:67.8,atl:77.4,hrv:37,hrvSDNN:46,restingHR:48,readiness:7.6,sleepSecs:28800,sleepScore:5,vo2max:51},
+    {date:'2026-06-11',ctl:67.0,atl:73.5,hrv:57,hrvSDNN:56,restingHR:48,readiness:8.2,sleepSecs:28800,sleepScore:5,vo2max:50.8},
+    {date:'2026-06-12',ctl:67.8,atl:77.4,hrv:37,hrvSDNN:46,restingHR:47,readiness:7.6,sleepSecs:28800,sleepScore:5,vo2max:51},
     {date:'2026-06-13',ctl:71.0,atl:94.2,hrv:36,hrvSDNN:39,restingHR:49,readiness:7.6,sleepSecs:28800,sleepScore:5,vo2max:51},
-    {date:'2026-06-14',ctl:69.3,atl:81.6,hrv:33,hrvSDNN:32,restingHR:51,readiness:7.5,sleepSecs:28800,sleepScore:5,vo2max:50.9},
+    {date:'2026-06-14',ctl:69.3,atl:81.6,hrv:33,hrvSDNN:32,restingHR:50,readiness:7.5,sleepSecs:28800,sleepScore:5,vo2max:50.9},
     {date:'2026-06-15',ctl:68.5,atl:75.1,hrv:31,hrvSDNN:48,restingHR:47,readiness:7.4,sleepSecs:28800,sleepScore:5,vo2max:50.9},
-    {date:'2026-06-16',ctl:66.9,atl:65.1,hrv:41,hrvSDNN:42,restingHR:49,readiness:7.8,sleepSecs:28800,sleepScore:5,vo2max:50.9},
+    {date:'2026-06-16',ctl:68.2,atl:72.6,hrv:41,hrvSDNN:42,restingHR:49,readiness:7.8,sleepSecs:28800,sleepScore:5,vo2max:50.9},
+    {date:'2026-06-17',ctl:67.4,atl:67.6,hrv:25,hrvSDNN:33,restingHR:48,readiness:7.1,sleepSecs:28800,sleepScore:5,vo2max:51},
+    {date:'2026-06-18',ctl:65.8,atl:58.6,hrv:46,hrvSDNN:48,restingHR:45,readiness:7.9,sleepSecs:28800,sleepScore:5,vo2max:50.9},
+    {date:'2026-06-19',ctl:64.6,atl:52.4,hrv:50,hrvSDNN:54,restingHR:44,readiness:8.0,sleepSecs:28800,sleepScore:5,vo2max:50.9},
+    {date:'2026-06-20',ctl:67.3,atl:69.6,hrv:null,hrvSDNN:null,restingHR:44,readiness:null,sleepSecs:14040,sleepScore:47,vo2max:53},
+    {date:'2026-06-21',ctl:65.7,atl:60.4,hrv:41,hrvSDNN:43,restingHR:47,readiness:7.7,sleepSecs:28800,sleepScore:5,vo2max:50.9},
+    {date:'2026-06-22',ctl:65.5,atl:59.5,hrv:30,hrvSDNN:74,restingHR:50,readiness:7.4,sleepSecs:28800,sleepScore:5,vo2max:50.9},
+    {date:'2026-06-23',ctl:63.9,atl:51.6,hrv:32,hrvSDNN:39,restingHR:50,readiness:7.4,sleepSecs:28800,sleepScore:5,vo2max:50.9},
+    {date:'2026-06-24',ctl:63.7,atl:52.1,hrv:25,hrvSDNN:49,restingHR:51,readiness:7.2,sleepSecs:28800,sleepScore:5,vo2max:50.9},
+    {date:'2026-06-25',ctl:63.8,atl:53.9,hrv:24,hrvSDNN:33,restingHR:47,readiness:7.1,sleepSecs:28800,sleepScore:5,vo2max:51},
+    {date:'2026-06-26',ctl:64.1,atl:57.4,hrv:33,hrvSDNN:33,restingHR:46,readiness:7.5,sleepSecs:20640,sleepScore:76,vo2max:51},
   ],
   acts: [
-    {id:'i157492116',date:'2026-06-15',name:'Veyrières',kj:323,tss:33,np:115,dist:33.3,elev:428,ef:1.32,vi:1.62,dec:-77.8,hr:87,hrmax:121,dur:'1h15',type:'R'},
-    {id:'i156975036',date:'2026-06-13',name:'Lanobre',kj:1699,tss:203,np:168,dist:84.8,elev:1334,ef:1.35,vi:1.27,dec:22.8,hr:124,hrmax:156,dur:'3h33',type:'A'},
-    {id:'i156688391',date:'2026-06-12',name:'VO2max',kj:600,tss:83,np:176,dist:25.9,elev:463,ef:1.60,vi:1.41,dec:-29.3,hr:110,hrmax:151,dur:'1h20',type:'A'},
-    {id:'i156644157',date:'2026-06-12',name:'Veyrières (échauff.)',kj:200,tss:20,np:136,dist:15.4,elev:77,ef:1.36,vi:1.33,dec:15.8,hr:100,hrmax:125,dur:'0h32',type:'R'},
-    {id:'i156099049',date:'2026-06-10',name:'Tempo',kj:1075,tss:126,np:156,dist:57.0,elev:559,ef:1.53,vi:1.33,dec:-24.3,hr:102,hrmax:149,dur:'2h32',type:'B'},
-    {id:'i155826492',date:'2026-06-09',name:'Zone 2',kj:644,tss:64,np:160,dist:31.5,elev:357,ef:1.44,vi:1.11,dec:-2.9,hr:111,hrmax:128,dur:'1h14',type:'Z2'},
-    {id:'i155362192',date:'2026-06-08',name:'Zone 2',kj:907,tss:83,np:139,dist:50.4,elev:468,ef:1.43,vi:1.18,dec:5.1,hr:97,hrmax:127,dur:'2h07',type:'Z2'},
-    {id:'i154841932',date:'2026-06-06',name:'Bort-les-Orgues',kj:1697,tss:211,np:160,dist:88.4,elev:1259,ef:1.44,vi:1.36,dec:1.8,hr:111,hrmax:155,dur:'3h59',type:'A'},
-    {id:'i154571148',date:'2026-06-05',name:'Veyrières (récup)',kj:688,tss:64,np:116,dist:52.1,elev:334,ef:1.33,vi:1.41,dec:0.6,hr:87,hrmax:124,dur:'2h19',type:'R'},
-    {id:'i153965654',date:'2026-06-03',name:'Entraînement côtes',kj:1267,tss:203,np:178,dist:59.0,elev:1155,ef:1.76,vi:1.58,dec:-12.7,hr:101,hrmax:155,dur:'3h05',type:'A'},
+    {id:'i160336018',date:'2026-06-25',name:'Z2 endurance 1h30',kj:749,tss:66,np:144,dist:39.8,elev:395,ef:1.48,vi:1.10,dec:1.4,hr:97,hrmax:124,dur:'1h35',type:'Z2'},
+    {id:'i160102309',date:'2026-06-24',name:'Night Cyclisme virtuel (SS)',kj:516,tss:55,np:174,dist:27.4,elev:0,ef:1.47,vi:1.09,dec:-3.1,hr:118,hrmax:138,dur:'0h54',type:'SS'},
+    {id:'i159307958',date:'2026-06-22',name:'Sortie vélo le matin',kj:583,tss:54,np:146,dist:31.8,elev:376,ef:1.39,vi:1.12,dec:5.2,hr:105,hrmax:123,dur:'1h15',type:'Z2'},
+    {id:'i158838733',date:'2026-06-20',name:'Bort-les-Orgues',kj:1514,tss:182,np:156,dist:81.0,elev:1215,ef:1.41,vi:1.37,dec:19.3,hr:111,hrmax:145,dur:'3h41',type:'A'},
+    {id:'i158651351',date:'2026-06-19',name:'Veyrières',kj:145,tss:12,np:105,dist:15.0,elev:76,ef:1.25,vi:1.44,dec:22.5,hr:84,hrmax:108,dur:'0h33',type:'R'},
   ]
 };
 
 // ═══════════════════════════════════════════════════════════════════
-//  APPEL API ANTHROPIC — direct, sans MCP (données dans system prompt)
+//  APPEL API ANTHROPIC — via Cloudflare Worker (gère la clé API)
+//  Le Worker proxy expose /ai en POST et forward vers Anthropic
 // ═══════════════════════════════════════════════════════════════════
+const WORKER_URL = 'https://patient-flower-4cb6.jeangay1961.workers.dev';
+
 async function callAI(messages, system, maxTokens = 1000) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch(WORKER_URL + '/ai', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: maxTokens,
       system: system || buildCtx(),
       messages
@@ -462,7 +460,7 @@ async function callAI(messages, system, maxTokens = 1000) {
   });
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`API ${res.status}: ${err.slice(0,150)}`);
+    throw new Error(`API ${res.status}: ${err.slice(0,200)}`);
   }
   return res.json();
 }
@@ -475,41 +473,24 @@ function extractText(data) {
 // ═══════════════════════════════════════════════════════════════════
 //  INIT — tente le serveur local, fallback sur snapshot embarqué
 // ═══════════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════════════
-//  WORKER CLOUDFLARE — proxy ICU live (pas de CORS, clé sécurisée)
-// ═══════════════════════════════════════════════════════════════════
-const WORKER_URL = 'https://patient-flower-4cb6.jeangay1961.workers.dev';
-
 async function init() {
   setStatus('sync');
-  document.getElementById('sync-info').textContent = 'Connexion ICU live…';
+  document.getElementById('sync-info').textContent = 'Connexion ICU…';
 
   try {
-    // Tentative Worker Cloudflare (données ICU live)
-    const res = await fetch(WORKER_URL + '?t=' + Date.now(), { signal: AbortSignal.timeout(15000) });
-    if (!res.ok) throw new Error('worker ' + res.status);
+    const res = await fetch(WORKER_URL + '/all', { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw new Error('worker error ' + res.status);
     const raw = await res.json();
-    if (raw.error) throw new Error(raw.error);
-    loadFromRaw({ wellness: raw.wellness, activities: raw.activities, events: raw.events || [] });
-    if (raw.eftp) S.eftp = raw.eftp;
-    // Charger les blocs calculés par le Worker
-    if (raw.blocs && raw.blocs.length) {
-      BLOCS.length = 0;
-      raw.blocs.forEach(b => BLOCS.push(b));
-      const cur = BLOCS.find(b => b.current);
-      if (cur) S.weekNum = cur.iso;
-    }
+    loadFromRaw(raw);
     setStatus('ok');
-    const h = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-    document.getElementById('sync-info').textContent = 'ICU live · mis à jour à ' + h;
-    const llbl = document.getElementById('llbl');
-    if (llbl) llbl.textContent = 'Live ' + h;
+    const now = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    document.getElementById('sync-info').textContent = `ICU live ${now} · Worker actif`;
   } catch(e) {
     // Fallback snapshot embarqué
     loadFromSnapshot();
     setStatus('snap');
     document.getElementById('sync-info').textContent =
-      `Snapshot ${ICU_SNAPSHOT.generated} · Worker injoignable`;
+      `Snapshot ${ICU_SNAPSHOT.generated} · Worker hors ligne (${e.message})`;
   }
 
   document.getElementById('hsub').textContent =
@@ -558,7 +539,7 @@ function loadFromRaw(raw) {
 
   // ── Activités ─────────────────────────────────────────────────
   if (raw.activities && Array.isArray(raw.activities)) {
-    const rides = raw.activities.filter(a => ['Ride','VirtualRide'].includes(a.type));
+    const rides = raw.activities.filter(a => a.type === 'Ride');
     S.acts = rides.slice(0, 10).map(a => ({
       id:    a.id,
       date:  a.start_date_local?.split('T')[0],
@@ -577,40 +558,6 @@ function loadFromRaw(raw) {
       type:  guessType(a),
     }));
     recalcBlocsKJ(rides);
-    // Les blocs sont maintenant construits par le Worker — updateFutureLabels en fallback
-    if (raw.events) updateFutureLabelsFromEvents(raw.events);
-  }
-}
-
-function _placeholder_events() {
-  // ── Events ICU → déjà gérés dans buildDynamicBlocs ───────────
-  if (raw.events && Array.isArray(raw.events)) {
-    raw.events.forEach(ev => {
-      if (!ev.start_date_local) return;
-      const evDate = ev.start_date_local.split('T')[0];
-      // Trouver le bloc et le jour correspondant
-      BLOCS.forEach(bloc => {
-        if (!bloc.current && !bloc.future) return;
-        bloc.days.forEach(day => {
-          const dayIso = day2iso(day.j, bloc.iso);
-          if (!dayIso || dayIso !== evDate) return;
-          // Mettre à jour le label avec le nom de la séance ICU
-          if (ev.name) day.lab = ev.name;
-          // Déterminer le type depuis la description/nom
-          const n = (ev.name || '').toLowerCase();
-          if (n.includes('sweet') || n.includes('ss') || n.includes('seuil')) day.type = 'SS';
-          else if (n.includes('z2') || n.includes('zone 2') || n.includes('endurance') || n.includes('montagne')) day.type = 'Z2';
-          else if (n.includes('vo2') || n.includes('interval') || n.includes('côte')) day.type = 'A';
-          else if (n.includes('récup') || n.includes('recup') || n.includes('repos')) day.type = 'R';
-          // Ne jamais marquer comme réalisé — juste noter le TSS prévu
-          // day.r reste null jusqu'à ce qu'une activité réelle soit enregistrée
-          if (day.r === null && ev.icu_training_load) {
-            day.plannedTSS = Math.round(ev.icu_training_load);
-            day.r = null; // Explicitement null = prévu mais pas encore fait
-          }
-        });
-      });
-    });
   }
 }
 
@@ -642,170 +589,21 @@ function guessType(a) {
 }
 
 function recalcBlocsKJ(rides) {
-  const today = new Date().toISOString().split('T')[0];
+  // Recalcule les KJ réels de chaque bloc ISO depuis les activités live
   BLOCS.forEach(b => {
     const [d1, d2] = isoWeekRange(b.iso, 2026);
-    // Somme kJ réels (activités passées uniquement)
     const sum = rides
-      .filter(a => {
-        const d = (a.start_date_local || '').split('T')[0];
-        return d >= d1 && d <= d2 && d < today;
-      })
+      .filter(a => { const d = a.start_date_local?.split('T')[0]; return d >= d1 && d <= d2; })
       .reduce((s, a) => s + Math.round((a.icu_joules || 0) / 1000), 0);
     if (sum > 0) b.reel = sum;
-    // Mise à jour jour par jour
+    // Mettre à jour aussi les jours individuels
     b.days.forEach(day => {
       const iso = day2iso(day.j, b.iso);
-      if (!iso || iso >= today) return; // Ne pas toucher aux jours futurs
-      const dayRides = rides.filter(a => (a.start_date_local||'').split('T')[0] === iso);
-      day.r = dayRides.reduce((s, a) => s + Math.round((a.icu_joules||0)/1000), 0);
+      if (!iso) return;
+      const ride = rides.find(a => a.start_date_local?.startsWith(iso));
+      if (ride) day.r = Math.round((ride.icu_joules || 0) / 1000);
     });
   });
-}
-
-// ═══════════════════════════════════════════════════════════════════
-//  CONSTRUCTION DYNAMIQUE DES BLOCS depuis ICU
-//  Appelée après loadFromRaw — construit les semaines manquantes
-// ═══════════════════════════════════════════════════════════════════
-function buildDynamicBlocs(activities, events) {
-  const today = new Date().toISOString().split('T')[0];
-  const todayDate = new Date(today);
-  
-  // Semaine ISO courante
-  const currentISO = getISOWeek(todayDate);
-  const currentYear = todayDate.getFullYear();
-  
-  // Map des activités par date
-  const actsByDate = {};
-  activities.forEach(a => {
-    const d = (a.start_date_local||'').split('T')[0];
-    if (!d) return;
-    if (!actsByDate[d]) actsByDate[d] = [];
-    actsByDate[d].push(a);
-  });
-  
-  // Map des events par date
-  const eventsByDate = {};
-  if (events) events.forEach(ev => {
-    const d = (ev.start_date_local||'').split('T')[0];
-    if (!d) return;
-    if (!eventsByDate[d]) eventsByDate[d] = [];
-    eventsByDate[d].push(ev);
-  });
-  
-  // Vérifier si le bloc de la semaine courante existe déjà
-  const existingIsos = BLOCS.map(b => b.iso);
-  if (!existingIsos.includes(currentISO)) {
-    // Créer le bloc de la semaine courante
-    const [d1, d2] = isoWeekRange(currentISO, currentYear);
-    const monDate = new Date(d1);
-    const days = [];
-    const JOURS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(monDate);
-      d.setDate(monDate.getDate() + i);
-      const iso = d.toISOString().split('T')[0];
-      const dayNum = iso.split('-')[2];
-      const monthNum = iso.split('-')[1];
-      const j = `${JOURS[i]} ${dayNum}`;
-      
-      // Chercher activité réelle
-      const acts = actsByDate[iso] || [];
-      const kj = acts.reduce((s,a) => s + Math.round((a.icu_joules||0)/1000), 0);
-      
-      // Chercher event planifié
-      const evs = eventsByDate[iso] || [];
-      const ev = evs.find(e => e.type === 'Ride' || e.category === 'WORKOUT');
-      
-      let lab = ev ? ev.name : (kj > 0 ? acts[0]?.name || 'Sortie' : 'Repos');
-      let type = 'R';
-      if (kj > 0) {
-        type = guessType(acts[0] || {});
-      } else if (ev) {
-        const n = (ev.name||'').toLowerCase();
-        if (n.includes('sweet')||n.includes('ss')||n.includes('seuil')) type = 'SS';
-        else if (n.includes('z2')||n.includes('endurance')||n.includes('montagne')) type = 'Z2';
-        else if (n.includes('vo2')||n.includes('interval')||n.includes('côte')) type = 'A';
-        else if (n.includes('récup')||n.includes('repos')) type = 'R';
-        else type = 'Z2';
-      }
-      
-      days.push({
-        j, lab,
-        type,
-        r: iso < today ? kj : (iso === today && kj > 0 ? kj : null)
-      });
-    }
-    
-    // Marquer tous les anciens blocs comme non-current
-    BLOCS.forEach(b => { b.current = false; });
-    
-    BLOCS.push({
-      iso: currentISO,
-      dates: `${new Date(d1).getDate().toString().padStart(2,'0')}–${new Date(d2).getDate().toString().padStart(2,'0')}/${(new Date(d1).getMonth()+1).toString().padStart(2,'0')}`,
-      type: 'charge',
-      ordre: 'C1/3',
-      cible: 4200,
-      reel: null,
-      current: true,
-      days
-    });
-    
-    // Trier par iso
-    BLOCS.sort((a,b) => a.iso - b.iso);
-    S.weekNum = currentISO;
-  } else {
-    // Mettre à jour le bloc existant avec les events
-    const bloc = BLOCS.find(b => b.iso === currentISO);
-    if (bloc) {
-      bloc.current = true;
-      S.weekNum = currentISO;
-      bloc.days.forEach(day => {
-        const iso = day2iso(day.j, bloc.iso);
-        if (!iso || iso < today) return;
-        // Mettre à jour avec events ICU
-        const evs = eventsByDate[iso] || [];
-        const ev = evs.find(e => e.type === 'Ride' || e.category === 'WORKOUT');
-        if (ev && ev.name) {
-          day.lab = ev.name;
-          const n = ev.name.toLowerCase();
-          if (n.includes('sweet')||n.includes('ss')||n.includes('seuil')) day.type = 'SS';
-          else if (n.includes('z2')||n.includes('endurance')||n.includes('montagne')) day.type = 'Z2';
-          else if (n.includes('vo2')||n.includes('interval')) day.type = 'A';
-        }
-      });
-    }
-  }
-}
-
-function updateFutureLabelsFromEvents(events) {
-  const today = new Date().toISOString().split('T')[0];
-  const bloc = BLOCS.find(b => b.current);
-  if (!bloc) return;
-  events.forEach(ev => {
-    if (!ev.start_date_local) return;
-    const evDate = ev.start_date_local.split('T')[0];
-    if (evDate < today) return; // Ignorer les events passés
-    const day = bloc.days.find(d => {
-      const iso = day2iso(d.j, bloc.iso);
-      return iso === evDate;
-    });
-    if (!day || day.r !== null) return; // Ne pas écraser les réalisés
-    if (ev.name) day.lab = ev.name;
-    const n = (ev.name||'').toLowerCase();
-    if (n.includes('sweet')||n.includes('ss')||n.includes('seuil')) day.type = 'SS';
-    else if (n.includes('z2')||n.includes('endurance')||n.includes('montagne')) day.type = 'Z2';
-    else if (n.includes('vo2')||n.includes('interval')) day.type = 'A';
-    else if (n.includes('récup')||n.includes('repos')) day.type = 'R';
-  });
-}
-
-function getISOWeek(date) {
-  const d = new Date(date);
-  d.setHours(0,0,0,0);
-  d.setDate(d.getDate() + 4 - (d.getDay()||7));
-  const yearStart = new Date(d.getFullYear(),0,1);
-  return Math.ceil((((d-yearStart)/86400000)+1)/7);
 }
 
 function isoWeekRange(week, year) {
@@ -1608,8 +1406,8 @@ Format : sections courtes avec emoji, chiffres précis, explication physiologiqu
   }
 }
 
-// ─── URL du projet Claude — remplacer par l'URL réelle du projet ───
-const CLAUDE_PROJECT_URL = 'https://claude.ai/project/METTRE_ID_PROJET_ICI';
+// ─── URL du projet Claude ───
+const CLAUDE_PROJECT_URL = 'https://claude.ai/project/019ea391-88cd-72a7-b273-31d429527e07';
 
 function askCoach(q) {
   // Construit un message complet avec le contexte ICU + la question
@@ -1709,16 +1507,16 @@ function extractWorkout(text) {
   return null;
 }
 
-// Envoyer la séance sur ICU via server.py
+// Envoyer la séance sur ICU via Cloudflare Worker
 async function sendToICU(workout, btn) {
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-loader" style="animation:spin .7s linear infinite"></i> Envoi…';
   try {
-    const res = await fetch('http://localhost:8765/workout', {
+    const res = await fetch(WORKER_URL + '/workout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(workout),
-      signal: AbortSignal.timeout(8000)
+      signal: AbortSignal.timeout(10000)
     });
     const data = await res.json();
     if (data.ok) {
