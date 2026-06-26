@@ -1429,43 +1429,28 @@ async function sendChat() {
   const q = inp.value.trim();
   if (!q) return;
   inp.value = '';
-  inp.disabled = true;
 
-  const hist = document.getElementById('chat-history');
-  hist.innerHTML += `<div class="msg mu3"><div class="mb2">${q.replace(/</g,'&lt;')}</div></div>`;
-  const lid = 'l' + Date.now();
-  hist.innerHTML += `<div class="msg mai" id="${lid}"><div class="mb2"><span class="ct">…</span></div></div>`;
-  hist.scrollTop = hist.scrollHeight;
+  const w = S.wellness.length
+    ? [...S.wellness].sort((a,b)=>b.date.localeCompare(a.date))[0]
+    : {};
 
-  S.chatHistory.push({role:'user', content:q});
+  const ctx = [
+    `[VeloCoach AI — contexte live ${new Date().toLocaleDateString('fr-FR')}]`,
+    `CTL ${S.ctl?S.ctl.toFixed(1):'?'} · ATL ${S.atl?S.atl.toFixed(1):'?'} · TSB ${S.tsb?S.tsb.toFixed(1):'?'}`,
+    `HRV ${w.hrv||'?'} ms · HR repos ${w.restingHR||'?'} bpm · Readiness ${w.readiness||'?'}/10`,
+    `eFTP ${S.eftp||220}W · ${((S.eftp||220)/S.weight).toFixed(2)} w/kg · S${S.weekNum}`,
+    `Dernière sortie : ${S.acts[0]?S.acts[0].name+' '+S.acts[0].date+' · '+S.acts[0].kj+' kJ · TSS '+S.acts[0].tss:'—'}`,
+    ``,
+    q
+  ].join('\n');
 
-  try {
-    const data = await callAI(S.chatHistory.slice(-8), buildCtx(), 1200);
-    const ans  = extractText(data) || 'Erreur.';
-    S.chatHistory.push({role:'assistant', content:ans});
-
-    // Détecter un bloc JSON icu_workout dans la réponse
-    const workout = extractWorkout(ans);
-    const cleanAns = ans.replace(/```[\s\S]*?```/g, '').trim();
-
-    const msgEl = document.getElementById(lid).querySelector('.mb2');
-    msgEl.textContent = cleanAns;
-
-    // Bouton "Envoyer sur ICU" si une séance structurée est détectée
-    if (workout) {
-      const btn = document.createElement('button');
-      btn.className = 'bp';
-      btn.style.cssText = 'margin-top:10px;font-size:12px;padding:7px 14px';
-      btn.innerHTML = '<i class="ti ti-calendar-plus"></i> Envoyer sur ICU';
-      btn.onclick = () => sendToICU(workout, btn);
-      document.getElementById(lid).querySelector('.mb2').after(btn);
-    }
-  } catch(e) {
-    document.getElementById(lid).querySelector('.mb2').textContent = 'Erreur de connexion.';
-  }
-  inp.disabled = false;
-  inp.focus();
-  hist.scrollTop = hist.scrollHeight;
+  navigator.clipboard.writeText(ctx).then(() => {
+    window.open(CLAUDE_PROJECT_URL, '_blank');
+    showToast('✓ Question copiée · Colle dans Claude ⌘V');
+  }).catch(() => {
+    window.open(CLAUDE_PROJECT_URL, '_blank');
+    showToast('Ouvre Claude et pose ta question');
+  });
 }
 
 // Extraire un bloc icu_workout du texte de réponse
