@@ -373,14 +373,14 @@ const BLOCS = [
     {j:'Sam 20',lab:'Bort-les-Orgues',type:'A',r:1513},
     {j:'Dim 21',lab:'Repos total',type:'R',r:450},
    ]},
-  {iso:26,dates:'22–28/06',type:'charge',ordre:'C1/3',cible:4200,reel:null,current:true,
+  {iso:26,dates:'22–28/06',type:'charge',ordre:'C1/3',cible:4200,reel:null,current:true,future:false,
    days:[
     {j:'Lun 22',lab:'Sortie matin Z2',type:'Z2',r:583},
     {j:'Mar 23',lab:'Repos',type:'R',r:0},
     {j:'Mer 24',lab:'Night SS 3×10min',type:'SS',r:516},
     {j:'Jeu 25',lab:'Z2 endurance 1h30',type:'Z2',r:749},
-    {j:'Ven 26',lab:'SS 3×12min (prévu)',type:'SS',r:null},
-    {j:'Sam 27',lab:'Sortie montagne (prévu)',type:'A',r:null},
+    {j:'Ven 26',lab:'SS 2×20min seuil 1h',type:'SS',r:null},
+    {j:'Sam 27',lab:'Z2 montagne 3h cols',type:'Z2',r:null},
     {j:'Dim 28',lab:'Repos',type:'R',r:null},
    ]},
 ];
@@ -570,6 +570,34 @@ function loadFromRaw(raw) {
       type:  guessType(a),
     }));
     recalcBlocsKJ(rides);
+  }
+
+  // ── Events ICU → mise à jour automatique des jours prévus ─────
+  if (raw.events && Array.isArray(raw.events)) {
+    raw.events.forEach(ev => {
+      if (!ev.start_date_local) return;
+      const evDate = ev.start_date_local.split('T')[0];
+      // Trouver le bloc et le jour correspondant
+      BLOCS.forEach(bloc => {
+        if (!bloc.current && !bloc.future) return;
+        bloc.days.forEach(day => {
+          const dayIso = day2iso(day.j, bloc.iso);
+          if (!dayIso || dayIso !== evDate) return;
+          // Mettre à jour le label avec le nom de la séance ICU
+          if (ev.name) day.lab = ev.name;
+          // Déterminer le type depuis la description/nom
+          const n = (ev.name || '').toLowerCase();
+          if (n.includes('sweet') || n.includes('ss') || n.includes('seuil')) day.type = 'SS';
+          else if (n.includes('z2') || n.includes('zone 2') || n.includes('endurance') || n.includes('montagne')) day.type = 'Z2';
+          else if (n.includes('vo2') || n.includes('interval') || n.includes('côte')) day.type = 'A';
+          else if (n.includes('récup') || n.includes('recup') || n.includes('repos')) day.type = 'R';
+          // kJ prévu depuis le TSS estimé (si pas encore réalisé)
+          if (day.r === null && ev.icu_training_load) {
+            day.plannedTSS = Math.round(ev.icu_training_load);
+          }
+        });
+      });
+    });
   }
 }
 
