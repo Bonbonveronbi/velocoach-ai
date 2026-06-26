@@ -517,7 +517,7 @@ function loadFromRaw(raw) {
 
   // ── Activités ─────────────────────────────────────────────────
   if (raw.activities && Array.isArray(raw.activities)) {
-    const rides = raw.activities.filter(a => a.type === 'Ride');
+    const rides = raw.activities.filter(a => ['Ride','VirtualRide'].includes(a.type));
     S.acts = rides.slice(0, 10).map(a => ({
       id:    a.id,
       date:  a.start_date_local?.split('T')[0],
@@ -585,25 +585,24 @@ function recalcBlocsKJ(rides) {
 }
 
 function isoWeekRange(week, year) {
-  // Lundi de la semaine ISO
+  // Lundi de la semaine ISO — en heure locale (pas UTC)
   const jan4 = new Date(year, 0, 4);
   const mon = new Date(jan4);
   mon.setDate(jan4.getDate() - (jan4.getDay() || 7) + 1 + (week - 1) * 7);
   const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-  return [mon.toISOString().split('T')[0], sun.toISOString().split('T')[0]];
+  // Formatage local pour éviter le décalage UTC
+  const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return [fmt(mon), fmt(sun)];
 }
 
 function day2iso(label, isoWeek) {
-  // Convertit "Lun 08" en "2026-06-08"
-  const m = label.match(/(\d+)$/);
-  if (!m) return null;
   const [d1] = isoWeekRange(isoWeek, 2026);
-  const mon = new Date(d1);
   const days = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
   const dow = days.findIndex(d => label.startsWith(d));
   if (dow < 0) return null;
-  const target = new Date(mon); target.setDate(mon.getDate() + dow);
-  return target.toISOString().split('T')[0];
+  const mon = new Date(d1 + 'T12:00:00'); // midi pour éviter DST
+  mon.setDate(mon.getDate() + dow);
+  return `${mon.getFullYear()}-${String(mon.getMonth()+1).padStart(2,'0')}-${String(mon.getDate()).padStart(2,'0')}`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
