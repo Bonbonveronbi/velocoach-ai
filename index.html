@@ -379,8 +379,8 @@ const BLOCS = [
     {j:'Mar 23',lab:'Repos',type:'R',r:0},
     {j:'Mer 24',lab:'Night SS 3×10min',type:'SS',r:516},
     {j:'Jeu 25',lab:'Z2 endurance 1h30',type:'Z2',r:749},
-    {j:'Ven 26',lab:'SS 2×20min seuil 1h',type:'SS',r:null},
-    {j:'Sam 27',lab:'Z2 montagne 3h cols',type:'Z2',r:null},
+    {j:'Ven 26',lab:'SS 2×20min seuil 1h (prévu)',type:'SS',r:null},
+    {j:'Sam 27',lab:'Z2 montagne 3h cols (prévu)',type:'Z2',r:null},
     {j:'Dim 28',lab:'Repos',type:'R',r:null},
    ]},
 ];
@@ -591,9 +591,11 @@ function loadFromRaw(raw) {
           else if (n.includes('z2') || n.includes('zone 2') || n.includes('endurance') || n.includes('montagne')) day.type = 'Z2';
           else if (n.includes('vo2') || n.includes('interval') || n.includes('côte')) day.type = 'A';
           else if (n.includes('récup') || n.includes('recup') || n.includes('repos')) day.type = 'R';
-          // kJ prévu depuis le TSS estimé (si pas encore réalisé)
+          // Ne jamais marquer comme réalisé — juste noter le TSS prévu
+          // day.r reste null jusqu'à ce qu'une activité réelle soit enregistrée
           if (day.r === null && ev.icu_training_load) {
             day.plannedTSS = Math.round(ev.icu_training_load);
+            day.r = null; // Explicitement null = prévu mais pas encore fait
           }
         });
       });
@@ -640,8 +642,12 @@ function recalcBlocsKJ(rides) {
     b.days.forEach(day => {
       const iso = day2iso(day.j, b.iso);
       if (!iso) return;
+      // Ne pas écraser les jours futurs (aujourd'hui et après)
+      const today = new Date().toISOString().split('T')[0];
+      if (iso > today) return;
       const ride = rides.find(a => a.start_date_local?.startsWith(iso));
       if (ride) day.r = Math.round((ride.icu_joules || 0) / 1000);
+      else if (iso < today && day.r === null) day.r = 0; // Jour passé sans activité = repos
     });
   });
 }
