@@ -227,6 +227,11 @@ h1{font-size:17px;font-weight:500}
 <div id="tab-blocs" class="tab">
   <p class="st" style="margin-top:0">Cycle d'entraînement — semaines ISO 2026</p>
   <div class="bloc-row" id="bloc-row"></div>
+  <p class="st">Progression kJ — réalisé vs cible</p>
+  <div class="card">
+    <div class="cw" style="height:200px"><canvas id="blocsChart"></canvas></div>
+    <div id="blocs-chart-leg" style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mu);margin-top:8px"></div>
+  </div>
   <p class="st">Détail semaine sélectionnée</p>
   <div class="card" id="bloc-detail"><div class="ld"><div class="spin"></div></div></div>
 </div>
@@ -393,6 +398,26 @@ const BLOCS = [
     {j:'Sam 04',lab:'Sortie longue Z2/SS',type:'Z2',r:null},
     {j:'Dim 05',lab:'Repos total',type:'R',r:null},
    ]},
+  {iso:28,dates:'06–12/07',type:'charge',ordre:'C3/3',cible:4800,reel:null,
+   days:[
+    {j:'Lun 06',lab:'SS 3×20min',type:'SS',r:null},
+    {j:'Mar 07',lab:'Repos',type:'R',r:null},
+    {j:'Mer 08',lab:'Z2 2h',type:'Z2',r:null},
+    {j:'Jeu 09',lab:'SS 4×15min',type:'SS',r:null},
+    {j:'Ven 10',lab:'Repos',type:'R',r:null},
+    {j:'Sam 11',lab:'Sortie longue 3h',type:'A',r:null},
+    {j:'Dim 12',lab:'Repos total',type:'R',r:null},
+   ]},
+  {iso:29,dates:'13–19/07',type:'recup',ordre:'Décharge',cible:2200,reel:null,
+   days:[
+    {j:'Lun 13',lab:'Z1 récup 45min',type:'R',r:null},
+    {j:'Mar 14',lab:'Repos',type:'R',r:null},
+    {j:'Mer 15',lab:'Z2 1h max',type:'Z2',r:null},
+    {j:'Jeu 16',lab:'Repos',type:'R',r:null},
+    {j:'Ven 17',lab:'Z1 récup 45min',type:'R',r:null},
+    {j:'Sam 18',lab:'Z2 activations',type:'Z2',r:null},
+    {j:'Dim 19',lab:'Repos total',type:'R',r:null},
+   ]},
 ];
 
 // ═══════════════════════════════════════════════════════════════════
@@ -499,6 +524,8 @@ async function init() {
   setStatus('sync');
   document.getElementById('sync-info').textContent = 'Connexion ICU…';
 
+  // 1) Essai serveur local
+  let loaded = false;
   try {
     const res = await fetch('http://localhost:8765/all', { signal: AbortSignal.timeout(4000) });
     if (!res.ok) throw new Error('server error');
@@ -507,12 +534,34 @@ async function init() {
     setStatus('ok');
     const now = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
     document.getElementById('sync-info').textContent = `ICU live ${now} · Serveur local actif`;
-  } catch(e) {
-    // Fallback snapshot embarqué
+    loaded = true;
+  } catch(e) { /* localhost indisponible → essai Worker */ }
+
+  // 2) Fallback Worker Cloudflare
+  if (!loaded) {
+    try {
+      const WORKER = 'https://patient-flower-4cb6.jeangay1961.workers.dev';
+      const today = new Date().toISOString().split('T')[0];
+      const w42   = new Date(Date.now()-42*864e5).toISOString().split('T')[0];
+      const w45   = new Date(Date.now()-45*864e5).toISOString().split('T')[0];
+      const [rw, ra] = await Promise.all([
+        fetch(`${WORKER}/wellness?oldest=${w42}&newest=${today}`, {signal:AbortSignal.timeout(8000)}).then(r=>r.json()),
+        fetch(`${WORKER}/activities?oldest=${w45}&newest=${today}`, {signal:AbortSignal.timeout(8000)}).then(r=>r.json()),
+      ]);
+      loadFromRaw({ wellness: rw, activities: ra });
+      setStatus('ok');
+      const now = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+      document.getElementById('sync-info').textContent = `ICU live ${now} · Cloudflare Worker`;
+      loaded = true;
+    } catch(e) { /* Worker indisponible → snapshot */ }
+  }
+
+  // 3) Fallback snapshot embarqué
+  if (!loaded) {
     loadFromSnapshot();
     setStatus('snap');
     document.getElementById('sync-info').textContent =
-      `Snapshot ${ICU_SNAPSHOT.generated} · Démarrer server.py pour données live`;
+      `Snapshot ${ICU_SNAPSHOT.generated} · Worker et serveur indisponibles`;
   }
 
   document.getElementById('hsub').textContent =
@@ -1094,14 +1143,19 @@ function renderCharge() {
 // ═══════════════════════════════════════════════════════════════════
 //  BLOCS
 // ═══════════════════════════════════════════════════════════════════
+let blocsCI = null;
+
 function renderBlocs() {
   const colB = {A:'#D85A30',SS:'#534AB7',Z2:'#185FA5',R:'#1D9E75',B:'#BA7517'};
+
+  // Cartes semaines
   document.getElementById('bloc-row').innerHTML = BLOCS.map((b,i) => {
     const delta = b.reel!=null ? b.reel-b.cible : null;
-    return `<div class="bloc-c ${b.type==='recup'?'recup':''} ${b.current?'sel':''}" onclick="selectBloc(${i})">
+    const isCur = b.current;
+    return `<div class="bloc-c ${b.type==='recup'?'recup':''} ${isCur?'sel':''}" onclick="selectBloc(${i})">
       <div style="display:flex;justify-content:space-between;align-items:start">
         <div style="font-size:10px;color:var(--mu);font-weight:500">S${b.iso} ${b.ordre}</div>
-        ${b.current?'<span style="font-size:9px;background:var(--blue);color:#fff;padding:1px 6px;border-radius:8px">EN COURS</span>':''}
+        ${isCur?'<span style="font-size:9px;background:var(--blue);color:#fff;padding:1px 6px;border-radius:8px">EN COURS</span>':''}
       </div>
       <div class="bloc-num-big">${b.reel!=null?b.reel.toLocaleString('fr-FR'):b.cible.toLocaleString('fr-FR')}<span style="font-size:12px;font-weight:400"> kJ</span></div>
       <div style="font-size:11px;color:var(--mu)">${b.dates}</div>
@@ -1110,6 +1164,76 @@ function renderBlocs() {
         : `<div style="font-size:11px;color:var(--mu);margin-top:3px">Cible ${b.cible.toLocaleString()} kJ</div>`}
     </div>`;
   }).join('');
+
+  // Graphe progression kJ réalisé vs cible
+  const labels  = BLOCS.map(b => 'S'+b.iso);
+  const reels   = BLOCS.map(b => b.reel ?? null);
+  const cibles  = BLOCS.map(b => b.cible);
+  // Couleurs barres : vert si OK, orange si dépassement, bleu si en cours, gris si futur
+  const barCols = BLOCS.map(b => {
+    if (b.reel == null) return 'rgba(180,178,169,0.35)';
+    if (b.current)      return 'rgba(24,95,165,0.75)';
+    if (b.reel > b.cible * 1.05) return 'rgba(186,117,23,0.8)';
+    return 'rgba(29,158,117,0.8)';
+  });
+
+  if (blocsCI) blocsCI.destroy();
+  blocsCI = new Chart(document.getElementById('blocsChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Réalisé kJ',
+          data: reels,
+          backgroundColor: barCols,
+          borderRadius: 5,
+          order: 2
+        },
+        {
+          label: 'Cible kJ',
+          data: cibles,
+          type: 'line',
+          borderColor: '#A32D2D',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [5,4],
+          pointRadius: 4,
+          pointBackgroundColor: '#A32D2D',
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { ticks:{font:{size:10}}, grid:{display:false} },
+        y: { ticks:{font:{size:10}, callback: v => v.toLocaleString('fr-FR')+' kJ'}, grid:{color:'rgba(0,0,0,0.05)'} }
+      },
+      plugins: { legend:{display:false},
+        tooltip: { callbacks: {
+          label: ctx => {
+            const b = BLOCS[ctx.dataIndex];
+            if (ctx.datasetIndex===0) {
+              const v = ctx.raw;
+              if (v==null) return 'Non réalisé';
+              const pct = Math.round(v/b.cible*100);
+              return `Réalisé : ${v.toLocaleString('fr-FR')} kJ (${pct}%)`;
+            }
+            return `Cible : ${ctx.raw.toLocaleString('fr-FR')} kJ`;
+          }
+        }}
+      }
+    }
+  });
+
+  document.getElementById('blocs-chart-leg').innerHTML = `
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(29,158,117,0.8);display:inline-block"></span>Réalisé ✓</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(24,95,165,0.75);display:inline-block"></span>En cours</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(186,117,23,0.8);display:inline-block"></span>Dépassement</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(180,178,169,0.35);border:1px solid #ccc;display:inline-block"></span>Prévu</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:18px;height:0;border-top:2px dashed #A32D2D"></span>Cible</span>`;
+
   const curIdx = BLOCS.findIndex(b=>b.current);
   selectBloc(curIdx >= 0 ? curIdx : BLOCS.length-1);
 }
@@ -1121,19 +1245,20 @@ function selectBloc(idx) {
   const colMap = {A:'#D85A30',SS:'#534AB7',Z2:'#185FA5',R:'#1D9E75',B:'#BA7517'};
 
   const totalR = b.days.reduce((s,d) => s + (d.r != null ? d.r : 0), 0);
-  // isDone = vrai si reel est renseigné (même partiel pour semaine en cours)
   const isDone = b.reel != null && b.reel > 0;
   const reelDisplay = isDone ? b.reel : totalR;
-
-  // maxKJ robuste : max des réels non-null, fallback sur cible
   const reels = b.days.map(d => d.r != null ? d.r : 0);
   const maxKJ = Math.max(...reels, b.cible * 0.5, 400);
 
-  const rows = b.days.map(d => {
+  const today = new Date();
+  const dow = (today.getDay() + 6) % 7;
+
+  const rows = b.days.map((d, i) => {
     const reel = d.r;
     const barW = (reel != null && reel > 0) ? Math.round((reel / maxKJ) * 100) : 0;
+    const isTodayRow = i === dow && b.current;
     return `<div class="week-row">
-      <span class="wd-j">${d.j}</span>
+      <span class="wd-j" style="${isTodayRow?'font-weight:600;color:var(--text)':''}">${d.j}${isTodayRow?' ◀':''}</span>
       <div class="wd-bar"><div class="wd-bg">
         ${reel != null && reel > 0
           ? `<div class="wd-fill" style="width:${barW}%;background:${colMap[d.type]||'var(--blue)'}">
@@ -1149,14 +1274,14 @@ function selectBloc(idx) {
 
   const globalDelta = isDone ? reelDisplay - b.cible : null;
 
-  // Question d'analyse poussée pour le projet Claude
-  const analyseQ = [
-    `[VeloCoach — analyse bloc S${b.iso}]`,
-    `CTL ${S.ctl?S.ctl.toFixed(1):'?'} · ATL ${S.atl?S.atl.toFixed(1):'?'} · TSB ${S.tsb?S.tsb.toFixed(1):'?'}`,
-    `S${b.iso} ${b.ordre} · Réalisé ${totalR.toLocaleString()} kJ / Cible ${b.cible.toLocaleString()} kJ (${isDone?Math.round(totalR/b.cible*100)+'%':'en cours'})`,
-    `Détail jours : ` + b.days.filter(d=>d.r!=null&&d.r>0).map(d=>`${d.j} ${d.r}kJ`).join(', '),
-    ``,
-    `Analyse complète de ce bloc : qualité de la charge, cohérence avec les blocs précédents, impact CTL/ATL/TSB, et recommandations précises pour S${b.iso+1}.`
+  // Contexte pour Claude — stocké en variable JS, pas inline dans onclick
+  window._lastBlocCtx = [
+    '[VeloCoach — analyse bloc S'+b.iso+']',
+    'CTL '+(S.ctl?S.ctl.toFixed(1):'?')+' · ATL '+(S.atl?S.atl.toFixed(1):'?')+' · TSB '+(S.tsb?S.tsb.toFixed(1):'?'),
+    'S'+b.iso+' '+b.ordre+' · Réalisé '+totalR.toLocaleString()+' kJ / Cible '+b.cible.toLocaleString()+' kJ ('+(isDone?Math.round(totalR/b.cible*100)+'%':'en cours')+')',
+    'Détail jours : '+b.days.filter(d=>d.r!=null&&d.r>0).map(d=>d.j+' '+d.r+'kJ').join(', '),
+    '',
+    'Analyse complète de ce bloc : qualité de la charge, cohérence avec les blocs précédents, impact CTL/ATL/TSB, et recommandations précises pour S'+(b.iso+1)+'.'
   ].join('\n');
 
   document.getElementById('bloc-detail').innerHTML = `
@@ -1187,15 +1312,24 @@ function selectBloc(idx) {
     ${globalDelta != null && Math.abs(globalDelta) > 150
       ? `<div class="al ${globalDelta>0?'aw':'aok'}" style="margin-top:10px;margin-bottom:8px">
            ${globalDelta>0
-             ? `Dépassement de +${globalDelta} kJ — compenser S${b.iso+1} : réduire de ~${Math.round(globalDelta*0.5)} kJ.`
-             : `Déficit de ${Math.abs(globalDelta)} kJ — analyser le TSB avant d'ajuster S${b.iso+1}.`}
+             ? 'Dépassement de +'+globalDelta+' kJ — compenser S'+(b.iso+1)+' : réduire de ~'+Math.round(globalDelta*0.5)+' kJ.'
+             : 'Déficit de '+Math.abs(globalDelta)+' kJ — analyser le TSB avant d\'ajuster S'+(b.iso+1)+'.'}
          </div>` : ''}
-    <button class="bs" style="margin-top:8px;width:100%;justify-content:center;gap:6px"
-      onclick="navigator.clipboard.writeText(${JSON.stringify(analyseQ)}).then(()=>{window.open(CLAUDE_PROJECT_URL,'_blank');showToast('Contexte copié · Colle dans Claude ⌘V')}).catch(()=>window.open(CLAUDE_PROJECT_URL,'_blank'))">
+    <button class="bs" style="margin-top:8px;width:100%;justify-content:center;gap:6px" onclick="ouvrirAnalyseBloc()">
       <i class="ti ti-robot" style="font-size:13px"></i> Analyse poussée de ce bloc dans Claude ↗
     </button>`;
 }
 
+function ouvrirAnalyseBloc() {
+  const ctx = window._lastBlocCtx || 'Analyse bloc VeloCoach';
+  navigator.clipboard.writeText(ctx).then(() => {
+    window.open(CLAUDE_PROJECT_URL, '_blank');
+    showToast('Contexte copié · Colle dans Claude ⌘V');
+  }).catch(() => {
+    window.open(CLAUDE_PROJECT_URL, '_blank');
+    showToast('Ouvre Claude et colle ton analyse');
+  });
+}
 // ═══════════════════════════════════════════════════════════════════
 //  SÉANCES
 // ═══════════════════════════════════════════════════════════════════
