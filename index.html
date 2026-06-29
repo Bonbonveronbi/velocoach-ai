@@ -676,26 +676,34 @@ function recalcBlocsKJ(rides) {
   });
 }
 
+function dateToLocal(d) {
+  // Convertit une Date en YYYY-MM-DD heure locale (pas UTC)
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const j = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${j}`;
+}
+
 function isoWeekRange(week, year) {
-  // Lundi de la semaine ISO
+  // Lundi de la semaine ISO — en heure locale pour éviter le décalage UTC+2
   const jan4 = new Date(year, 0, 4);
-  const mon = new Date(jan4);
+  const mon = new Date(year, 0, 4);
   mon.setDate(jan4.getDate() - (jan4.getDay() || 7) + 1 + (week - 1) * 7);
   const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-  return [mon.toISOString().split('T')[0], sun.toISOString().split('T')[0]];
+  return [dateToLocal(mon), dateToLocal(sun)];
 }
 
 function day2iso(label, isoWeek) {
-  // Convertit "Lun 08" en "2026-06-08"
+  // Convertit "Lun 08" en "2026-06-08" — en heure locale
   const m = label.match(/(\d+)$/);
   if (!m) return null;
   const [d1] = isoWeekRange(isoWeek, 2026);
-  const mon = new Date(d1);
+  const mon = new Date(d1 + 'T12:00:00'); // midi = pas de risque de bascule UTC
   const days = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
   const dow = days.findIndex(d => label.startsWith(d));
   if (dow < 0) return null;
   const target = new Date(mon); target.setDate(mon.getDate() + dow);
-  return target.toISOString().split('T')[0];
+  return dateToLocal(target);
 }
 
 // ═══════════════════════════════════════════════════════════════════
