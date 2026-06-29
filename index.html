@@ -305,7 +305,7 @@ const S = {
   chatHistory: [],
   mmpMode: 'watts',
   selectedBloc: null,
-  weekNum: 27,      // S27 — semaine actuelle ISO
+  weekNum: (() => { const n=new Date(); const t=new Date(n); t.setDate(n.getDate()-((n.getDay()+6)%7)+3); const j=new Date(t.getFullYear(),0,4); return 1+Math.round((t-j)/604800000); })()
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -383,7 +383,7 @@ const BLOCS = [
     {j:'Sam 27',lab:'Sweet Spot 2×20',type:'SS',r:1400},
     {j:'Dim 28',lab:'Veyrières Z2',type:'Z2',r:518},
    ]},
-  {iso:27,dates:'29/06–05/07',type:'charge',ordre:'C2/3',cible:4500,reel:null,current:true,
+  {iso:27,dates:'29/06–05/07',type:'charge',ordre:'C2/3',cible:4500,reel:null,
    days:[
     {j:'Lun 29',lab:'SS 2×20min',type:'SS',r:772},
     {j:'Mar 30',lab:'Repos',type:'R',r:null},
@@ -664,6 +664,8 @@ function T(id, btn) {
 //  RENDER ALL
 // ═══════════════════════════════════════════════════════════════════
 function renderAll() {
+  // Auto-détection bloc courant (calculé depuis semaine ISO)
+  BLOCS.forEach(b => b.current = (b.iso === S.weekNum));
   renderJauge();
   renderDash();
   renderMMP();
@@ -1108,7 +1110,8 @@ function renderBlocs() {
         : `<div style="font-size:11px;color:var(--mu);margin-top:3px">Cible ${b.cible.toLocaleString()} kJ</div>`}
     </div>`;
   }).join('');
-  selectBloc(BLOCS.findIndex(b=>b.current) >= 0 ? BLOCS.findIndex(b=>b.current) : BLOCS.length-1);
+  const curIdx = BLOCS.findIndex(b=>b.current);
+  selectBloc(curIdx >= 0 ? curIdx : BLOCS.length-1);
 }
 
 function selectBloc(idx) {
