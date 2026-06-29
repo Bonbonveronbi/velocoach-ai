@@ -305,7 +305,7 @@ const S = {
   chatHistory: [],
   mmpMode: 'watts',
   selectedBloc: null,
-  weekNum: 26,      // S26 — semaine actuelle ISO
+  weekNum: 27,      // S27 — semaine actuelle ISO
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -363,92 +363,79 @@ const BLOCS = [
     {j:'Sam 13',lab:'Lanobre',type:'A',r:1699},
     {j:'Dim 14',lab:'Repos',type:'R',r:0},
    ]},
-  {iso:25,dates:'15–21/06',type:'recup',ordre:'Récup',cible:3200,reel:3007,
+  {iso:25,dates:'15–21/06',type:'recup',ordre:'Récup',cible:3200,reel:3909,
    days:[
     {j:'Lun 15',lab:'Veyrières',type:'R',r:323},
     {j:'Mar 16',lab:'Veyrières',type:'R',r:619},
-    {j:'Mer 17',lab:'Z2 1h30',type:'Z2',r:null},
+    {j:'Mer 17',lab:'Veyrières Z2',type:'Z2',r:354},
     {j:'Jeu 18',lab:'Repos',type:'R',r:0},
-    {j:'Ven 19',lab:'Veyrières récup',type:'R',r:145},
-    {j:'Sam 20',lab:'Bort-les-Orgues',type:'A',r:1514},
-    {j:'Dim 21',lab:'Repos total',type:'R',r:0},
+    {j:'Ven 19',lab:'Veyrières Z1',type:'R',r:145},
+    {j:'Sam 20',lab:'Bort-les-Orgues ⚠',type:'A',r:1514},
+    {j:'Dim 21',lab:'Repos',type:'R',r:0},
    ]},
-  {iso:26,dates:'22–28/06',type:'charge',ordre:'C1/4',cible:4500,reel:null,current:true,
+  {iso:26,dates:'22–28/06',type:'charge',ordre:'C1/3',cible:4200,reel:3848,
    days:[
-    {j:'Lun 22',lab:'Z2 matin',type:'Z2',r:583},
+    {j:'Lun 22',lab:'Sortie matin Z2',type:'Z2',r:583},
     {j:'Mar 23',lab:'Repos',type:'R',r:0},
-    {j:'Mer 24',lab:'Sweet Spot 3×10',type:'SS',r:516},
-    {j:'Jeu 25',lab:'Z2 assimilation',type:'Z2',r:749},
-    {j:'Ven 26',lab:'Repos / Z1',type:'R',r:null},
-    {j:'Sam 27',lab:'Z2 longue 3h',type:'Z2',r:null},
-    {j:'Dim 28',lab:'Repos',type:'R',r:null},
+    {j:'Mer 24',lab:'Virtual Night SS',type:'SS',r:516},
+    {j:'Jeu 25',lab:'Z2 endurance 1h30',type:'Z2',r:749},
+    {j:'Ven 26',lab:'Veyrières Z1',type:'R',r:313},
+    {j:'Sam 27',lab:'Sweet Spot 2×20',type:'SS',r:1400},
+    {j:'Dim 28',lab:'Veyrières Z2',type:'Z2',r:518},
    ]},
-  {iso:27,dates:'29/06–05/07',type:'charge',ordre:'C2/4',cible:4800,reel:null,
+  {iso:27,dates:'29/06–05/07',type:'charge',ordre:'C2/3',cible:4500,reel:null,current:true,
    days:[
-    {j:'Lun 29',lab:'Z2 endurance',type:'Z2',r:null},
+    {j:'Lun 29',lab:'SS 2×20min',type:'SS',r:772},
     {j:'Mar 30',lab:'Repos',type:'R',r:null},
-    {j:'Mer 01',lab:'SS 2×20min',type:'SS',r:null},
-    {j:'Jeu 02',lab:'Z2 assimilation',type:'Z2',r:null},
+    {j:'Mer 01',lab:'Z2 1h30',type:'Z2',r:null},
+    {j:'Jeu 02',lab:'Sweet Spot 3×15',type:'SS',r:null},
     {j:'Ven 03',lab:'Repos',type:'R',r:null},
-    {j:'Sam 04',lab:'Sortie longue 3h30',type:'A',r:null},
-    {j:'Dim 05',lab:'Repos',type:'R',r:null},
-   ]},
-  {iso:28,dates:'06–12/07',type:'charge',ordre:'C3/4',cible:5200,reel:null,
-   days:[
-    {j:'Lun 06',lab:'Z2 endurance',type:'Z2',r:null},
-    {j:'Mar 07',lab:'Repos',type:'R',r:null},
-    {j:'Mer 08',lab:'SS 2×20min',type:'SS',r:null},
-    {j:'Jeu 09',lab:'Z2 assimilation',type:'Z2',r:null},
-    {j:'Ven 10',lab:'Repos',type:'R',r:null},
-    {j:'Sam 11',lab:'Sortie longue 4h',type:'A',r:null},
-    {j:'Dim 12',lab:'Repos',type:'R',r:null},
-   ]},
-  {iso:29,dates:'13–19/07',type:'recup',ordre:'Décharge',cible:2200,reel:null,
-   days:[
-    {j:'Lun 13',lab:'Z1 récup 45min',type:'R',r:null},
-    {j:'Mar 14',lab:'Repos total',type:'R',r:null},
-    {j:'Mer 15',lab:'Z1 récup 45min',type:'R',r:null},
-    {j:'Jeu 16',lab:'Repos total',type:'R',r:null},
-    {j:'Ven 17',lab:'Z1 récup 45min',type:'R',r:null},
-    {j:'Sam 18',lab:'Z2 souple 1h30',type:'Z2',r:null},
-    {j:'Dim 19',lab:'Repos total',type:'R',r:null},
+    {j:'Sam 04',lab:'Sortie longue Z2/SS',type:'Z2',r:null},
+    {j:'Dim 05',lab:'Repos total',type:'R',r:null},
    ]},
 ];
 
 // ═══════════════════════════════════════════════════════════════════
-//  SÉANCES S25 — adaptées récupération
+//  SÉANCES S27 — bloc charge C2/3 (29/06–05/07)
 // ═══════════════════════════════════════════════════════════════════
 const SEANCES_S25 = [
-  {type:'R',day:'Mar 16/06',title:'Z1 Récupération 45min',sub:'Si HRV matin >40 ms seulement',kj:'~300 kJ',
-   blocks:[{c:'wz1',l:'45 min Z1 — 55-110W',d:'FC <95 bpm · Cadence libre · RPE 2/10'}],
-   note:'Si HRV <35 ce matin → repos total. La fatigue prime sur le programme.'},
-  {type:'Z2',day:'Mer 17/06',title:'Z2 Endurance 1h30',sub:'Flux sanguin, lipolyse, pas de stimuli nouveaux',kj:'~700 kJ',
-   blocks:[{c:'wz2',l:'10 min Z1 échauffement',d:'55-122W · FC <100'},{c:'wz2',l:'70 min Z2 — 122-160W',d:'FC 106-125 · EF >1.38 · Ne pas dépasser Z2 même si les jambes répondent'},{c:'wz1',l:'10 min retour Z1',d:'Muscu légère après optionnel : mobilité'}],
-   note:'<strong>Piège :</strong> si tu te sens bien → ne pas glisser en Z3. La supercompensation se construit dans la récup, pas dans un effort supplémentaire.'},
-  {type:'R',day:'Ven 19/06',title:'Récup active 45min',sub:'Maintien du flux sanguin uniquement',kj:'~250 kJ',
-   blocks:[{c:'wz1',l:'45 min Z1 — <110W',d:'Sortie de plaisir, pas d\'objectif · FC libre'}],
+  {type:'SS',day:'Lun 29/06',title:'SS 2×20min — Endurance seuil',sub:'✅ Réalisé aujourd\'hui — 772 kJ · TSS 66',kj:'772 kJ',
+   blocks:[{c:'wz4',l:'2×20min à 88–94% FTP (195–209W)',d:'FC cible 130–140 bpm · récup 5min Z1 entre · EF >1.45'}],
+   note:'Bonne séance ciblée. NP 120W / HR moy 81 bpm = EF 1.48. Indicateur positif d\'efficience aérobie.'},
+  {type:'R',day:'Mar 30/06',title:'Repos complet',sub:'Récupération musculaire après 2×20 SS',kj:'0 kJ',
+   blocks:[{c:'wz1',l:'Repos total — pas de vélo',d:'Musculation légère si souhaité : mobilité, étirements'}],
+   note:'Le mardi OFF est non-négociable après un lundi SS. La synthèse protéique et la resynthèse du glycogène nécessitent 24–36h sans charge.'},
+  {type:'Z2',day:'Mer 01/07',title:'Z2 Endurance 1h30',sub:'Lipolyse, récupération active, flux sanguin',kj:'~700 kJ',
+   blocks:[{c:'wz2',l:'10 min Z1 échauffement — <122W',d:'FC <100 bpm'},{c:'wz2',l:'70 min Z2 — 122–160W',d:'FC 106–125 · EF >1.42 · Cadence 85–90 rpm'},{c:'wz1',l:'10 min retour Z1',d:''}],
+   note:'<strong>Règle :</strong> si HRV matin <30 ms → réduire à 45min Z1 seulement. Ne pas glisser en Z3 même si les jambes répondent bien.'},
+  {type:'SS',day:'Jeu 02/07',title:'Sweet Spot 3×15min — Volume seuil',sub:'Progression de S27 vs S26 (2×20 → 3×15)',kj:'~900 kJ',
+   blocks:[{c:'wz4',l:'15 min Z1 échauffement',d:'<122W · FC <105'},{c:'wz4',l:'3×15min à 88–94% FTP (195–209W)',d:'Récup 5min Z1 entre · FC cible 130–142 · Décrouplage <8%'},{c:'wz2',l:'15 min retour Z1',d:''}],
+   note:'3×15 = 45min de travail SS contre 40min lundi. Progression de +12% de volume. Si découpling >10% sur le 3ème intervalle → stopper là.'},
+  {type:'R',day:'Ven 03/07',title:'Repos ou Z1 léger 45min',sub:'Conditionnelle selon HRV et ressenti',kj:'~200 kJ',
+   blocks:[{c:'wz1',l:'45 min Z1 optionnel — <110W',d:'Si HRV >38 ms et HR repos <50 bpm · Sinon repos total'}],
    note:null},
-  {type:'Z2',day:'Sam 20/06',title:'Z2 + Activations 1h15',sub:'Préparer le retour en charge S26',kj:'~550 kJ',
-   blocks:[{c:'wz2',l:'50 min Z2 — 122-160W',d:'FC 106-125'},{c:'wz2',l:'3 × 30s à 250-260W',d:'Activations neuromusculaires · récup 3min Z1 entre · RPE 7 max'},{c:'wz1',l:'15 min retour Z1',d:''}],
-   note:'Les 3×30s servent à "réveiller" le système neuromusculaire avant S26 sans créer de charge. Très différent d\'un vrai travail VO2.'},
+  {type:'Z2',day:'Sam 04/07',title:'Sortie longue Z2 2h — Volume aérobie',sub:'Socle mitochondrial, lipolyse, EF',kj:'~1000 kJ',
+   blocks:[{c:'wz2',l:'15 min Z1 échauffement',d:''},{c:'wz2',l:'90 min Z2 — 122–160W',d:'FC 106–125 · EF >1.42 · Carbs 60g/h minimum'},{c:'wz1',l:'15 min retour Z1',d:''}],
+   note:'<strong>Alimentation obligatoire :</strong> 60–80g glucides/h dès la 1ère heure. La chaleur en Auvergne en juillet = +30% de dépense hydrique. Bidons : 750ml/h minimum.'},
+  {type:'R',day:'Dim 05/07',title:'Repos total',sub:'Récupération avant analyse S27',kj:'0 kJ',
+   blocks:[{c:'wz1',l:'Repos absolu',d:'Pas de vélo · Marche légère OK · Piscine OK'}],
+   note:'Bilan S27 à faire dimanche soir : kJ réalisés vs cible 4500. Si TSB < −15 → prévoir S28 allégée.'},
 ];
 
 // ═══════════════════════════════════════════════════════════════════
-//  DONNÉES ICU — snapshot 26/06/2026 — générées par Claude via MCP
+//  DONNÉES ICU — snapshot 29/06/2026 — générées par Claude via MCP
 //  Pour actualiser : demander à Claude de régénérer le fichier
 // ═══════════════════════════════════════════════════════════════════
 const ICU_SNAPSHOT = {
-  generated: '2026-06-26',
-  eftp: 220,
+  generated: '2026-06-29',
+  eftp: 219,
   wellness: [
-    {date:'2026-06-07',ctl:66.9,atl:80.3,hrv:38,hrvSDNN:44,restingHR:47,readiness:7.6,sleepSecs:28560,sleepScore:5,vo2max:49.7},
-    {date:'2026-06-08',ctl:67.3,atl:80.7,hrv:30,hrvSDNN:48,restingHR:48,readiness:7.3,sleepSecs:28800,sleepScore:5,vo2max:49.7},
     {date:'2026-06-09',ctl:67.2,atl:78.5,hrv:31,hrvSDNN:34,restingHR:47,readiness:7.4,sleepSecs:28800,sleepScore:5,vo2max:50.7},
     {date:'2026-06-10',ctl:68.6,atl:84.8,hrv:41,hrvSDNN:41,restingHR:47,readiness:7.8,sleepSecs:28800,sleepScore:5,vo2max:50.8},
-    {date:'2026-06-11',ctl:67.0,atl:73.5,hrv:57,hrvSDNN:56,restingHR:48,readiness:8.2,sleepSecs:28800,sleepScore:5,vo2max:50.8},
+    {date:'2026-06-11',ctl:67.0,atl:73.5,hrv:57,hrvSDNN:56,restingHR:49,readiness:8.2,sleepSecs:28800,sleepScore:5,vo2max:50.8},
     {date:'2026-06-12',ctl:67.8,atl:77.4,hrv:37,hrvSDNN:46,restingHR:47,readiness:7.6,sleepSecs:28800,sleepScore:5,vo2max:51},
     {date:'2026-06-13',ctl:71.0,atl:94.2,hrv:36,hrvSDNN:39,restingHR:49,readiness:7.6,sleepSecs:28800,sleepScore:5,vo2max:51},
-    {date:'2026-06-14',ctl:69.3,atl:81.6,hrv:33,hrvSDNN:32,restingHR:50,readiness:7.5,sleepSecs:28800,sleepScore:5,vo2max:50.9},
+    {date:'2026-06-14',ctl:69.3,atl:81.6,hrv:33,hrvSDNN:32,restingHR:51,readiness:7.5,sleepSecs:28800,sleepScore:5,vo2max:50.9},
     {date:'2026-06-15',ctl:68.5,atl:75.1,hrv:31,hrvSDNN:48,restingHR:47,readiness:7.4,sleepSecs:28800,sleepScore:5,vo2max:50.9},
     {date:'2026-06-16',ctl:68.2,atl:72.6,hrv:41,hrvSDNN:42,restingHR:49,readiness:7.8,sleepSecs:28800,sleepScore:5,vo2max:50.9},
     {date:'2026-06-17',ctl:67.4,atl:67.6,hrv:25,hrvSDNN:33,restingHR:48,readiness:7.1,sleepSecs:28800,sleepScore:5,vo2max:51},
@@ -460,45 +447,72 @@ const ICU_SNAPSHOT = {
     {date:'2026-06-23',ctl:63.9,atl:51.6,hrv:32,hrvSDNN:39,restingHR:50,readiness:7.4,sleepSecs:28800,sleepScore:5,vo2max:50.9},
     {date:'2026-06-24',ctl:63.7,atl:52.1,hrv:25,hrvSDNN:49,restingHR:51,readiness:7.2,sleepSecs:28800,sleepScore:5,vo2max:50.9},
     {date:'2026-06-25',ctl:63.8,atl:53.9,hrv:24,hrvSDNN:33,restingHR:47,readiness:7.1,sleepSecs:28800,sleepScore:5,vo2max:51},
-    {date:'2026-06-26',ctl:64.1,atl:57.4,hrv:33,hrvSDNN:33,restingHR:46,readiness:7.5,sleepSecs:20640,sleepScore:76,vo2max:51},
+    {date:'2026-06-26',ctl:62.9,atl:50.5,hrv:33,hrvSDNN:33,restingHR:49,readiness:7.5,sleepSecs:28800,sleepScore:5,vo2max:51},
+    {date:'2026-06-27',ctl:65.3,atl:65.7,hrv:37,hrvSDNN:52,restingHR:47,readiness:7.6,sleepSecs:28800,sleepScore:5,vo2max:50.9},
+    {date:'2026-06-28',ctl:64.9,atl:63.5,hrv:36,hrvSDNN:46,restingHR:44,readiness:7.6,sleepSecs:28140,sleepScore:94,vo2max:53},
+    {date:'2026-06-29',ctl:65.0,atl:63.8,hrv:null,hrvSDNN:null,restingHR:48,readiness:null,sleepSecs:23940,sleepScore:74,vo2max:53},
   ],
   acts: [
+    {id:'i161244208',date:'2026-06-29',name:'SS 2×20min — endurance seuil 1h',kj:772,tss:66,np:120,dist:51.1,elev:463,ef:1.48,vi:1.26,dec:-1.6,hr:81,hrmax:128,dur:'2h15',type:'SS'},
+    {id:'i161056308',date:'2026-06-28',name:'Veyrières Z2',kj:518,tss:49,np:142,dist:30.6,elev:299,ef:1.29,vi:1.18,dec:-7.5,hr:110,hrmax:129,dur:'1h12',type:'Z2'},
+    {id:'i160702370',date:'2026-06-27',name:'Veyrières - Sweet Spot 2×20',kj:1400,tss:165,np:152,dist:74.2,elev:1134,ef:1.43,vi:1.39,dec:1.1,hr:106,hrmax:149,dur:'3h32',type:'SS'},
+    {id:'i160572483',date:'2026-06-26',name:'Veyrières Z1',kj:313,tss:28,np:126,dist:20.4,elev:200,ef:1.25,vi:1.26,dec:12.2,hr:101,hrmax:125,dur:'0h52',type:'R'},
     {id:'i160336018',date:'2026-06-25',name:'Z2 endurance 1h30',kj:749,tss:66,np:144,dist:39.8,elev:395,ef:1.48,vi:1.10,dec:1.4,hr:97,hrmax:124,dur:'1h35',type:'Z2'},
-    {id:'i160102309',date:'2026-06-24',name:'Night Cyclisme virtuel (SS)',kj:516,tss:55,np:174,dist:27.4,elev:0,ef:1.47,vi:1.09,dec:-3.1,hr:118,hrmax:138,dur:'0h54',type:'SS'},
-    {id:'i159307958',date:'2026-06-22',name:'Sortie vélo le matin',kj:583,tss:54,np:146,dist:31.8,elev:376,ef:1.39,vi:1.12,dec:5.2,hr:105,hrmax:123,dur:'1h15',type:'Z2'},
-    {id:'i158838733',date:'2026-06-20',name:'Bort-les-Orgues',kj:1514,tss:182,np:156,dist:81.0,elev:1215,ef:1.41,vi:1.37,dec:19.3,hr:111,hrmax:145,dur:'3h41',type:'A'},
-    {id:'i158651351',date:'2026-06-19',name:'Veyrières',kj:145,tss:12,np:105,dist:15.0,elev:76,ef:1.25,vi:1.44,dec:22.5,hr:84,hrmax:108,dur:'0h33',type:'R'},
+    {id:'i160102309',date:'2026-06-24',name:'Virtual Night SS',kj:516,tss:55,np:174,dist:27.4,elev:0,ef:1.47,vi:1.09,dec:-3.1,hr:118,hrmax:138,dur:'0h54',type:'SS'},
+    {id:'i159307958',date:'2026-06-22',name:'Sortie matin Z2',kj:583,tss:54,np:146,dist:31.8,elev:376,ef:1.39,vi:1.12,dec:5.2,hr:105,hrmax:123,dur:'1h15',type:'Z2'},
+    {id:'i158838733',date:'2026-06-20',name:'Bort-les-Orgues ⚠ récup brisée',kj:1514,tss:182,np:156,dist:81.0,elev:1215,ef:1.41,vi:1.37,dec:19.3,hr:111,hrmax:145,dur:'3h41',type:'A'},
+    {id:'i158651351',date:'2026-06-19',name:'Veyrières Z1',kj:145,tss:12,np:105,dist:15.0,elev:76,ef:1.25,vi:1.44,dec:22.5,hr:84,hrmax:108,dur:'0h33',type:'R'},
+    {id:'i158153958',date:'2026-06-17',name:'Veyrières Z2',kj:354,tss:35,np:132,dist:23.1,elev:228,ef:1.35,vi:1.33,dec:-9.8,hr:98,hrmax:121,dur:'0h59',type:'Z2'},
   ]
 };
 
 // ═══════════════════════════════════════════════════════════════════
-//  NOTE: pas d'appel API externe
-//  Coach IA fonctionne par copier/colle vers le projet Claude
+//  APPEL API ANTHROPIC — direct, sans MCP (données dans system prompt)
 // ═══════════════════════════════════════════════════════════════════
+async function callAI(messages, system, maxTokens = 1000) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      system: system || buildCtx(),
+      messages
+    })
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`API ${res.status}: ${err.slice(0,150)}`);
+  }
+  return res.json();
+}
+
+function extractText(data) {
+  if (!data || !data.content) return '';
+  return data.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+}
 
 // ═══════════════════════════════════════════════════════════════════
-//  INIT — données live via Cloudflare Worker, fallback snapshot
+//  INIT — tente le serveur local, fallback sur snapshot embarqué
 // ═══════════════════════════════════════════════════════════════════
-const WORKER_URL = 'https://patient-flower-4cb6.jeangay1961.workers.dev';
-
 async function init() {
   setStatus('sync');
   document.getElementById('sync-info').textContent = 'Connexion ICU…';
 
   try {
-    const res = await fetch(WORKER_URL + '/all', { signal: AbortSignal.timeout(8000) });
-    if (!res.ok) throw new Error('Worker ' + res.status);
+    const res = await fetch('http://localhost:8765/all', { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) throw new Error('server error');
     const raw = await res.json();
-    if (raw.wellness?.status === 403 || raw.wellness?.error) throw new Error('ICU auth');
     loadFromRaw(raw);
     setStatus('ok');
     const now = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-    document.getElementById('sync-info').textContent = `ICU live ${now} · Données à jour`;
+    document.getElementById('sync-info').textContent = `ICU live ${now} · Serveur local actif`;
   } catch(e) {
+    // Fallback snapshot embarqué
     loadFromSnapshot();
     setStatus('snap');
     document.getElementById('sync-info').textContent =
-      `Snapshot ${ICU_SNAPSHOT.generated} · (${e.message})`;
+      `Snapshot ${ICU_SNAPSHOT.generated} · Démarrer server.py pour données live`;
   }
 
   document.getElementById('hsub').textContent =
@@ -547,7 +561,7 @@ function loadFromRaw(raw) {
 
   // ── Activités ─────────────────────────────────────────────────
   if (raw.activities && Array.isArray(raw.activities)) {
-    const rides = raw.activities.filter(a => ['Ride','VirtualRide'].includes(a.type));
+    const rides = raw.activities.filter(a => a.type === 'Ride');
     S.acts = rides.slice(0, 10).map(a => ({
       id:    a.id,
       date:  a.start_date_local?.split('T')[0],
@@ -615,24 +629,25 @@ function recalcBlocsKJ(rides) {
 }
 
 function isoWeekRange(week, year) {
-  // Lundi de la semaine ISO — en heure locale (pas UTC)
+  // Lundi de la semaine ISO
   const jan4 = new Date(year, 0, 4);
   const mon = new Date(jan4);
   mon.setDate(jan4.getDate() - (jan4.getDay() || 7) + 1 + (week - 1) * 7);
   const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-  // Formatage local pour éviter le décalage UTC
-  const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  return [fmt(mon), fmt(sun)];
+  return [mon.toISOString().split('T')[0], sun.toISOString().split('T')[0]];
 }
 
 function day2iso(label, isoWeek) {
+  // Convertit "Lun 08" en "2026-06-08"
+  const m = label.match(/(\d+)$/);
+  if (!m) return null;
   const [d1] = isoWeekRange(isoWeek, 2026);
+  const mon = new Date(d1);
   const days = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
   const dow = days.findIndex(d => label.startsWith(d));
   if (dow < 0) return null;
-  const mon = new Date(d1 + 'T12:00:00'); // midi pour éviter DST
-  mon.setDate(mon.getDate() + dow);
-  return `${mon.getFullYear()}-${String(mon.getMonth()+1).padStart(2,'0')}-${String(mon.getDate()).padStart(2,'0')}`;
+  const target = new Date(mon); target.setDate(mon.getDate() + dow);
+  return target.toISOString().split('T')[0];
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1413,8 +1428,8 @@ Format : sections courtes avec emoji, chiffres précis, explication physiologiqu
   }
 }
 
-// ─── URL du projet Claude ───
-const CLAUDE_PROJECT_URL = 'https://claude.ai/chat';
+// ─── URL du projet Claude — remplacer par l'URL réelle du projet ───
+const CLAUDE_PROJECT_URL = 'https://claude.ai/project/019ea391-88cd-72a7-b273-31d429527e07';
 
 function askCoach(q) {
   // Construit un message complet avec le contexte ICU + la question
@@ -1460,28 +1475,43 @@ async function sendChat() {
   const q = inp.value.trim();
   if (!q) return;
   inp.value = '';
+  inp.disabled = true;
 
-  const w = S.wellness.length
-    ? [...S.wellness].sort((a,b)=>b.date.localeCompare(a.date))[0]
-    : {};
+  const hist = document.getElementById('chat-history');
+  hist.innerHTML += `<div class="msg mu3"><div class="mb2">${q.replace(/</g,'&lt;')}</div></div>`;
+  const lid = 'l' + Date.now();
+  hist.innerHTML += `<div class="msg mai" id="${lid}"><div class="mb2"><span class="ct">…</span></div></div>`;
+  hist.scrollTop = hist.scrollHeight;
 
-  const ctx = [
-    `[VeloCoach AI — contexte live ${new Date().toLocaleDateString('fr-FR')}]`,
-    `CTL ${S.ctl?S.ctl.toFixed(1):'?'} · ATL ${S.atl?S.atl.toFixed(1):'?'} · TSB ${S.tsb?S.tsb.toFixed(1):'?'}`,
-    `HRV ${w.hrv||'?'} ms · HR repos ${w.restingHR||'?'} bpm · Readiness ${w.readiness||'?'}/10`,
-    `eFTP ${S.eftp||220}W · ${((S.eftp||220)/S.weight).toFixed(2)} w/kg · S${S.weekNum}`,
-    `Dernière sortie : ${S.acts[0]?S.acts[0].name+' '+S.acts[0].date+' · '+S.acts[0].kj+' kJ · TSS '+S.acts[0].tss:'—'}`,
-    ``,
-    q
-  ].join('\n');
+  S.chatHistory.push({role:'user', content:q});
 
-  navigator.clipboard.writeText(ctx).then(() => {
-    window.open(CLAUDE_PROJECT_URL, '_blank');
-    showToast('✓ Question copiée · Colle dans Claude ⌘V');
-  }).catch(() => {
-    window.open(CLAUDE_PROJECT_URL, '_blank');
-    showToast('Ouvre Claude et pose ta question');
-  });
+  try {
+    const data = await callAI(S.chatHistory.slice(-8), buildCtx(), 1200);
+    const ans  = extractText(data) || 'Erreur.';
+    S.chatHistory.push({role:'assistant', content:ans});
+
+    // Détecter un bloc JSON icu_workout dans la réponse
+    const workout = extractWorkout(ans);
+    const cleanAns = ans.replace(/```[\s\S]*?```/g, '').trim();
+
+    const msgEl = document.getElementById(lid).querySelector('.mb2');
+    msgEl.textContent = cleanAns;
+
+    // Bouton "Envoyer sur ICU" si une séance structurée est détectée
+    if (workout) {
+      const btn = document.createElement('button');
+      btn.className = 'bp';
+      btn.style.cssText = 'margin-top:10px;font-size:12px;padding:7px 14px';
+      btn.innerHTML = '<i class="ti ti-calendar-plus"></i> Envoyer sur ICU';
+      btn.onclick = () => sendToICU(workout, btn);
+      document.getElementById(lid).querySelector('.mb2').after(btn);
+    }
+  } catch(e) {
+    document.getElementById(lid).querySelector('.mb2').textContent = 'Erreur de connexion.';
+  }
+  inp.disabled = false;
+  inp.focus();
+  hist.scrollTop = hist.scrollHeight;
 }
 
 // Extraire un bloc icu_workout du texte de réponse
@@ -1499,7 +1529,7 @@ function extractWorkout(text) {
   return null;
 }
 
-// Envoyer la séance sur ICU (nécessite server.py local ou futur Worker)
+// Envoyer la séance sur ICU via server.py
 async function sendToICU(workout, btn) {
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-loader" style="animation:spin .7s linear infinite"></i> Envoi…';
@@ -1508,21 +1538,21 @@ async function sendToICU(workout, btn) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(workout),
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(8000)
     });
     const data = await res.json();
     if (data.ok) {
       btn.innerHTML = '<i class="ti ti-check"></i> Ajouté au calendrier ICU !';
       btn.style.background = 'var(--green)';
-      showToast('✓ Séance envoyée sur Intervals.icu');
+      showToast('✓ Séance envoyée sur Intervals.icu · Sync Garmin dans ~1min');
     } else {
-      throw new Error(data.error || 'Erreur serveur');
+      throw new Error(data.error || 'Erreur ICU');
     }
   } catch(e) {
-    btn.innerHTML = '<i class="ti ti-alert-triangle"></i> Serveur local hors ligne';
-    btn.style.background = 'var(--amber)';
+    btn.innerHTML = '<i class="ti ti-alert-triangle"></i> Échec — server.py actif ?';
+    btn.style.background = 'var(--red)';
     btn.disabled = false;
-    showToast('Pas de serveur local. Copie la séance dans Claude pour envoyer sur ICU.');
+    showToast('Erreur : ' + e.message);
   }
 }
 
