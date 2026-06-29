@@ -2,8 +2,11 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VeloCoach AI v12 — Jean Gay</title>
+<title>VeloCoach AI v13 — Jean Gay</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
@@ -537,18 +540,14 @@ async function init() {
     loaded = true;
   } catch(e) { /* localhost indisponible → essai Worker */ }
 
-  // 2) Fallback Worker Cloudflare
+  // 2) Fallback Worker Cloudflare (expose /all uniquement)
   if (!loaded) {
     try {
       const WORKER = 'https://patient-flower-4cb6.jeangay1961.workers.dev';
-      const today = new Date().toISOString().split('T')[0];
-      const w42   = new Date(Date.now()-42*864e5).toISOString().split('T')[0];
-      const w45   = new Date(Date.now()-45*864e5).toISOString().split('T')[0];
-      const [rw, ra] = await Promise.all([
-        fetch(`${WORKER}/wellness?oldest=${w42}&newest=${today}`, {signal:AbortSignal.timeout(8000)}).then(r=>r.json()),
-        fetch(`${WORKER}/activities?oldest=${w45}&newest=${today}`, {signal:AbortSignal.timeout(8000)}).then(r=>r.json()),
-      ]);
-      loadFromRaw({ wellness: rw, activities: ra });
+      const res = await fetch(`${WORKER}/all`, {signal:AbortSignal.timeout(10000)});
+      if (!res.ok) throw new Error('worker error '+res.status);
+      const raw = await res.json();
+      loadFromRaw(raw);
       setStatus('ok');
       const now = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
       document.getElementById('sync-info').textContent = `ICU live ${now} · Cloudflare Worker`;
