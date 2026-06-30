@@ -1173,14 +1173,24 @@ function renderBlocs() {
   }).join('');
 
   // Graphe progression kJ réalisé vs cible
+  // Pour le bloc en cours : calculer les kJ partiels depuis les activités live
+  function kjPartielBloc(b) {
+    if (b.reel != null) return b.reel;
+    if (!b.current) return null;
+    // Sommer les kJ des jours déjà réalisés dans BLOCS[].days
+    const partiel = b.days.reduce((s,d) => s + (d.r != null && d.r > 0 ? d.r : 0), 0);
+    return partiel > 0 ? partiel : null;
+  }
+
   const labels  = BLOCS.map(b => 'S'+b.iso);
-  const reels   = BLOCS.map(b => b.reel ?? null);
+  const reels   = BLOCS.map(b => kjPartielBloc(b));
   const cibles  = BLOCS.map(b => b.cible);
   // Couleurs barres : vert si OK, orange si dépassement, bleu si en cours, gris si futur
   const barCols = BLOCS.map(b => {
-    if (b.reel == null) return 'rgba(180,178,169,0.35)';
-    if (b.current)      return 'rgba(24,95,165,0.75)';
-    if (b.reel > b.cible * 1.05) return 'rgba(186,117,23,0.8)';
+    const v = kjPartielBloc(b);
+    if (v == null)   return 'rgba(180,178,169,0.35)';
+    if (b.current)   return 'rgba(24,95,165,0.75)';
+    if (v > b.cible * 1.05) return 'rgba(186,117,23,0.8)';
     return 'rgba(29,158,117,0.8)';
   });
 
@@ -1544,7 +1554,8 @@ Syntaxe description ICU (% du FTP ${S.eftp||222}W) :
 Les % sont calculés sur FTP ${S.eftp||222}W. Ex: 88% = ${Math.round((S.eftp||222)*0.88)}W, 94% = ${Math.round((S.eftp||222)*0.94)}W, 110% = ${Math.round((S.eftp||222)*1.10)}W.`;
 }
 
-async function generateAutoCoach() {
+function generateAutoCoach() {
+  // Pas d'appel API direct (pas de clé Anthropic payante) — résumé calculé localement
   const el = document.getElementById('coach-auto');
   const today = new Date().toLocaleDateString('fr-FR', {weekday:'long',day:'numeric',month:'long'});
   document.getElementById('coach-date-label').textContent = `Analyse du ${today}`;
@@ -1553,23 +1564,37 @@ async function generateAutoCoach() {
     ? [...S.wellness].sort((a,b)=>b.date.localeCompare(a.date))[0]
     : {};
 
-  try {
-    const data = await callAI([{
-      role:'user',
-      content:`Bilan du jour S25 (semaine récupération) :
-- CTL=${S.ctl?S.ctl.toFixed(1):'68'}, ATL=${S.atl?S.atl.toFixed(1):'75'}, TSB=${S.tsb?S.tsb.toFixed(1):'-7'}
-- HRV=${w.hrv||'?'} ms, HR repos=${w.restingHR||'?'} bpm
-Analyse : état de récupération, risques à surveiller, recommandation précise pour aujourd'hui et pour les 3 prochains jours.
-Format : sections courtes avec emoji, chiffres précis, explication physiologique en 1-2 phrases max par point.`
-    }], buildCtx(), 900);
-    const text = extractText(data);
-    el.textContent = text || 'Analyse indisponible.';
-  } catch(e) {
-    const tsb = S.tsb ? Math.round(S.tsb) : '?';
-    const hrv = S.wellness[0]?.hrv || '?';
-    const hr = S.wellness[0]?.restingHR || '?';
-    el.textContent = `S25 Récupération\n\n📊 TSB = ${tsb} · HRV = ${hrv} ms · HR repos = ${hr} bpm\n\nLe système nerveux autonome sort d'une séquence de 3 semaines de charge (S21-S23) + une 4ème semaine (S24). La supercompensation se produit maintenant : repos = progression.\n\n💡 Aujourd'hui : si HR repos >55 bpm → repos absolu. Si HRV <35 ms → même chose.\n\n🎯 Cette semaine : max 2 sorties Z2 légères, 0 intensité, priorité sommeil >8h.`;
+  const tsb = S.tsb!=null ? Math.round(S.tsb) : null;
+  const hrv = w.hrv ?? null;
+  const hr  = w.restingHR ?? null;
+  const bloc = BLOCS.find(b=>b.current);
+  const blocLabel = bloc ? `S${bloc.iso} ${bloc.type==='recup'?'Récupération':bloc.ordre}` : `S${S.weekNum}`;
+
+  let statut, conseil;
+  if (hrv != null && hrv < 25) {
+    statut = '🔴 HRV bas — système nerveux non récupéré';
+    conseil = 'Repos ou Z1 ≤45min uniquement aujourd\'hui. Pas d\'intensité tant que HRV <30 ms.';
+  } else if (tsb != null && tsb < -10) {
+    statut = '⚠️ TSB en zone fatigue';
+    conseil = 'Privilégier Z1/Z2 léger. Pas de séance de qualité tant que TSB < -10.';
+  } else if (tsb != null && tsb > 5) {
+    statut = '✓ Forme optimale';
+    conseil = 'Bonne fenêtre pour une séance de qualité (Sweet Spot ou VO2max) si au programme.';
+  } else {
+    statut = 'Neutre — surveiller ressenti';
+    conseil = 'Suivre le plan prévu, ajuster selon HRV matin et sensations sur les premières minutes.';
   }
+
+  el.textContent =
+`${blocLabel}
+
+📊 TSB = ${tsb ?? '?'} · HRV = ${hrv ?? '—'} ms · HR repos = ${hr ?? '?'} bpm
+
+${statut}
+
+💡 ${conseil}
+
+Pour une analyse approfondie, utilise les boutons "Questions rapides" ci-dessous — ils ouvrent ton projet Claude avec le contexte ICU déjà préparé.`;
 }
 
 // ─── URL du projet Claude — remplacer par l'URL réelle du projet ───
@@ -1589,15 +1614,32 @@ function askCoach(q) {
     ``,
     q
   ].join('\n');
-  // Ouvre le projet Claude avec le message pré-rempli dans le champ texte
-  // Note : claude.ai ne supporte pas ?q= en URL, on copie dans le presse-papier
-  navigator.clipboard.writeText(ctx).then(() => {
-    window.open(CLAUDE_PROJECT_URL, '_blank');
-    showToast('Contexte copié · Colle-le dans Claude ⌘V');
-  }).catch(() => {
-    window.open(CLAUDE_PROJECT_URL, '_blank');
-    showToast('Ouvre Claude et pose ta question');
-  });
+
+  // ÉTAPE 1 : ouvrir la fenêtre IMMÉDIATEMENT (synchrone) pour éviter le blocage popup
+  const win = window.open(CLAUDE_PROJECT_URL, '_blank');
+
+  // ÉTAPE 2 : copier dans le presse-papier (asynchrone, peut échouer silencieusement)
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(ctx)
+      .then(() => showToast('✓ Contexte copié · Colle dans Claude (Ctrl+V)'))
+      .catch(() => showToast('⚠ Copie auto échouée · Copie le texte affiché ci-dessous'));
+  } else {
+    showToast('⚠ Presse-papier indisponible · Copie le texte ci-dessous');
+  }
+
+  // ÉTAPE 3 : fallback visuel — afficher le contexte dans le chat pour copie manuelle
+  const hist = document.getElementById('chat-history');
+  if (hist) {
+    hist.innerHTML += `<div class="msg mai"><div class="mb2" style="font-size:11px;background:var(--al);color:var(--ad)">
+      <strong>Si la copie auto a échoué, sélectionne et copie ce texte :</strong><br>
+      <textarea readonly onclick="this.select()" style="width:100%;margin-top:6px;font-size:11px;font-family:monospace;background:#fff;border:1px solid var(--br);border-radius:4px;padding:6px;min-height:80px">${ctx.replace(/</g,'&lt;')}</textarea>
+    </div></div>`;
+    hist.scrollTop = hist.scrollHeight;
+  }
+
+  if (!win) {
+    showToast('⚠ Popup bloquée · Autorise les popups pour ce site');
+  }
 }
 
 function showToast(msg) {
@@ -1614,48 +1656,13 @@ function showToast(msg) {
   t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
 }
 
-async function sendChat() {
+function sendChat() {
   const inp = document.getElementById('coach-input');
   const q = inp.value.trim();
   if (!q) return;
   inp.value = '';
-  inp.disabled = true;
-
-  const hist = document.getElementById('chat-history');
-  hist.innerHTML += `<div class="msg mu3"><div class="mb2">${q.replace(/</g,'&lt;')}</div></div>`;
-  const lid = 'l' + Date.now();
-  hist.innerHTML += `<div class="msg mai" id="${lid}"><div class="mb2"><span class="ct">…</span></div></div>`;
-  hist.scrollTop = hist.scrollHeight;
-
-  S.chatHistory.push({role:'user', content:q});
-
-  try {
-    const data = await callAI(S.chatHistory.slice(-8), buildCtx(), 1200);
-    const ans  = extractText(data) || 'Erreur.';
-    S.chatHistory.push({role:'assistant', content:ans});
-
-    // Détecter un bloc JSON icu_workout dans la réponse
-    const workout = extractWorkout(ans);
-    const cleanAns = ans.replace(/```[\s\S]*?```/g, '').trim();
-
-    const msgEl = document.getElementById(lid).querySelector('.mb2');
-    msgEl.textContent = cleanAns;
-
-    // Bouton "Envoyer sur ICU" si une séance structurée est détectée
-    if (workout) {
-      const btn = document.createElement('button');
-      btn.className = 'bp';
-      btn.style.cssText = 'margin-top:10px;font-size:12px;padding:7px 14px';
-      btn.innerHTML = '<i class="ti ti-calendar-plus"></i> Envoyer sur ICU';
-      btn.onclick = () => sendToICU(workout, btn);
-      document.getElementById(lid).querySelector('.mb2').after(btn);
-    }
-  } catch(e) {
-    document.getElementById(lid).querySelector('.mb2').textContent = 'Erreur de connexion.';
-  }
-  inp.disabled = false;
-  inp.focus();
-  hist.scrollTop = hist.scrollHeight;
+  // Pas d'appel API direct (pas de clé Anthropic payante) — on route vers le projet Claude
+  askCoach(q);
 }
 
 // Extraire un bloc icu_workout du texte de réponse
