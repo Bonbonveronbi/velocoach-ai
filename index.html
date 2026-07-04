@@ -455,30 +455,10 @@ const ICU_SNAPSHOT = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-//  APPEL API ANTHROPIC — direct, sans MCP (données dans system prompt)
+//  COACH IA — pas d'appel API. Le contexte est copié dans le presse-
+//  papier et le projet Claude dédié s'ouvre dans un nouvel onglet.
+//  Plus de clé, plus de CORS, plus de Worker à maintenir pour ça.
 // ═══════════════════════════════════════════════════════════════════
-async function callAI(messages, system, maxTokens = 1000) {
-  const res = await fetch('https://patient-flower-4cb6.jeangay1961.workers.dev/coach', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-5',
-      max_tokens: maxTokens,
-      system: system || buildCtx(),
-      messages
-    })
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`API ${res.status}: ${err.slice(0,150)}`);
-  }
-  return res.json();
-}
-
-function extractText(data) {
-  if (!data || !data.content) return '';
-  return data.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
-}
 
 // ═══════════════════════════════════════════════════════════════════
 //  DATES LOCALES — FIX du bug de décalage d'un jour
@@ -1384,33 +1364,11 @@ CONTRAINTES MASTER 64 ANS :
 - Récupération lente → attendre HRV >45 avant séance de qualité
 - Éviter >2 séances intenses/semaine, 1 seule séance VO2max/semaine max après 40 ans
 
-Tu as accès à WorkoutContext MCP pour récupérer les vraies données ICU en temps réel si besoin.
-Réponds en français, précis, chiffré, pédagogue sur la physiologie.
-
-SÉANCES STRUCTURÉES — IMPORTANT :
-Quand tu proposes une séance d'entraînement, inclus TOUJOURS à la fin un bloc JSON dans ce format exact pour permettre l'envoi automatique sur Intervals.icu :
-
-\`\`\`json
-{
-  "icu_workout": {
-    "name": "Nom de la séance",
-    "date": "YYYY-MM-DD",
-    "type": "Ride",
-    "load": 80,
-    "description": "10min 55% FTP échauffement\\n3x 15min 88-94% FTP récup 5min 55%\\n10min 55% FTP retour au calme"
-  }
-}
-\`\`\`
-
-Syntaxe description ICU (% du FTP ${S.eftp||219}W) :
-- Échauffement : "Xmin Y% FTP"  
-- Intervalles : "Nx Xmin Y% FTP récup Xmin Z%"
-- SteadyState : "Xmin Y-Z% FTP"
-- Retour calme : "Xmin Y% FTP"
-Les % sont calculés sur FTP ${S.eftp||219}W. Ex: 88% = ${Math.round((S.eftp||219)*0.88)}W, 94% = ${Math.round((S.eftp||219)*0.94)}W, 110% = ${Math.round((S.eftp||219)*1.10)}W.`;
+Tu as accès à WorkoutContext MCP pour récupérer les vraies données ICU en temps réel et créer directement les événements/séances sur le calendrier Intervals.icu de Jean si besoin — pas la peine de produire un format JSON intermédiaire, l'outil MCP fait ça nativement.
+Réponds en français, précis, chiffré, pédagogue sur la physiologie.`;
 }
 
-async function generateAutoCoach() {
+function generateAutoCoach() {
   const el = document.getElementById('coach-auto');
   const today = new Date().toLocaleDateString('fr-FR', {weekday:'long',day:'numeric',month:'long'});
   document.getElementById('coach-date-label').textContent = `Analyse du ${today}`;
@@ -1418,49 +1376,54 @@ async function generateAutoCoach() {
   const w = S.wellness.length
     ? [...S.wellness].sort((a,b)=>b.date.localeCompare(a.date))[0]
     : {};
+  const last = S.acts[0];
+  const tsb = S.tsb!=null ? Math.round(S.tsb) : null;
+  const hrv = w.hrv ?? null;
+  const hr  = w.restingHR ?? null;
+  const bloc = BLOCS.find(b=>b.current) || BLOCS[BLOCS.length-1];
+  const totalReel = bloc.days.reduce((s,d)=>s+(d.r||0),0);
 
-  try {
-    const data = await callAI([{
-      role:'user',
-      content:`Bilan du jour, fin de S${S.weekNum} (semaine de charge) :
-- CTL=${S.ctl?S.ctl.toFixed(1):'67'}, ATL=${S.atl?S.atl.toFixed(1):'78'}, TSB=${S.tsb?S.tsb.toFixed(1):'-11.6'}
-- HRV=${w.hrv||'?'} ms, HR repos=${w.restingHR||'?'} bpm
-- Sortie du jour : 194 TSS, 1492 kJ, décsan +24.9% (Bort-les-Orgues, 3h39, chaleur)
-Analyse : état de récupération, risques à surveiller, recommandation précise pour demain (repos) et pour le bilan de bloc.
-Format : sections courtes avec emoji, chiffres précis, explication physiologique en 1-2 phrases max par point.`
-    }], buildCtx(), 900);
-    const text = extractText(data);
-    el.textContent = text || 'Analyse indisponible.';
-  } catch(e) {
-    const tsb = S.tsb ? Math.round(S.tsb) : '?';
-    const hrv = S.wellness[0]?.hrv || '?';
-    const hr = S.wellness[0]?.restingHR || '?';
-    el.textContent = `S${S.weekNum} — Fin de bloc charge\n\n📊 TSB = ${tsb} · HR repos = ${hr} bpm\n\n194 TSS encaissés aujourd'hui sur 3h39 en montagne. C'est le pic de charge du bloc — attendu en semaine de charge, pas un signal d'alarme, mais ça ferme la fenêtre à toute intensité demain.\n\n💡 Demain : repos total, zéro négociation. La resynthèse du glycogène et la réparation musculaire se jouent dans les 24-48h.\n\n🎯 Cible kJ du bloc déjà atteinte (4 271 / 4 300 kJ) — aucune urgence à combler quoi que ce soit dimanche.`;
+  const lignes = [];
+  lignes.push(`S${S.weekNum} — ${bloc.type==='recup'?'Récupération':bloc.ordre}`);
+  lignes.push('');
+  lignes.push(`📊 TSB = ${tsb??'?'} · HRV = ${hrv??'—'} ms · HR repos = ${hr??'?'} bpm`);
+  lignes.push('');
+
+  if (tsb!=null && tsb < -10) {
+    lignes.push(`⚠️ Fatigue accumulée marquée. ${last?`${last.name} (${last.tss} TSS) pèse encore lourd.`:''} Récupération prioritaire avant toute intensité — la resynthèse du glycogène musculaire et la réparation du tissu conjonctif se jouent dans les 24-48h suivant un effort chargé.`);
+  } else if (tsb!=null && tsb < -5) {
+    lignes.push(`🟡 Fatigue modérée. Une séance d'intensité reste possible si HRV et FC repos confirment une bonne récupération, mais privilégie le Z2 en cas de doute.`);
+  } else if (tsb!=null && tsb > 5) {
+    lignes.push(`✅ Forme disponible. TSB positif — c'est le moment pour une séance de qualité si le programme le prévoit.`);
+  } else {
+    lignes.push(`🔵 Forme neutre. Suis ton ressenti et ton HRV du jour pour trancher entre Z2 et intensité.`);
   }
+  lignes.push('');
+
+  if (hrv!=null && hrv < 25) {
+    lignes.push(`🔴 HRV sous le seuil d'alerte (25ms) — système nerveux autonome en sous-régime. Repos ou Z1 ≤30min uniquement aujourd'hui.`);
+  } else if (hrv!=null) {
+    lignes.push(`HRV dans la plage structurelle habituelle (28-42ms) — pas de signal d'alarme.`);
+  }
+  lignes.push('');
+
+  lignes.push(`🎯 Bloc S${S.weekNum} : ${totalReel.toLocaleString('fr-FR')} / ${bloc.cible.toLocaleString('fr-FR')} kJ${totalReel>=bloc.cible?' — cible déjà atteinte.':'.'}`);
+  lignes.push('');
+  lignes.push(`Besoin d'aller plus loin (comparaison aux blocs précédents, ajustement fin, question spécifique) → utilise le champ ci-dessous, ça s'ouvre dans ton projet Claude avec tout le contexte déjà collé.`);
+
+  el.textContent = lignes.join('\n');
 }
 
-// ─── URL du projet Claude — remplacer par l'URL réelle du projet ───
-const CLAUDE_PROJECT_URL = 'https://claude.ai/project/METTRE_ID_PROJET_ICI';
+// ─── URL du projet Claude dédié à VeloCoach ───
+const CLAUDE_PROJECT_URL = 'https://claude.ai/project/019ea391-88cd-72a7-b273-31d429527e07';
 
 function askCoach(q) {
-  // Construit un message complet avec le contexte ICU + la question
-  const w = S.wellness.length
-    ? [...S.wellness].sort((a,b)=>b.date.localeCompare(a.date))[0]
-    : {};
-  const ctx = [
-    `[VeloCoach AI — contexte automatique ${new Date().toLocaleDateString('fr-FR')}]`,
-    `CTL ${S.ctl?S.ctl.toFixed(1):'?'} · ATL ${S.atl?S.atl.toFixed(1):'?'} · TSB ${S.tsb?S.tsb.toFixed(1):'?'}`,
-    `HRV ${w.hrv||'?'} ms · HR repos ${w.restingHR||'?'} bpm · Readiness ${w.readiness||'?'}/10`,
-    `eFTP ${S.eftp||219}W · ${((S.eftp||219)/S.weight).toFixed(2)} w/kg · S${S.weekNum}`,
-    `Dernière sortie : ${S.acts[0]?S.acts[0].name+' '+S.acts[0].date+' · '+S.acts[0].kj+' kJ · TSS '+S.acts[0].tss:'—'}`,
-    ``,
-    q
-  ].join('\n');
-  // Ouvre le projet Claude avec le message pré-rempli dans le champ texte
-  // Note : claude.ai ne supporte pas ?q= en URL, on copie dans le presse-papier
+  // Contexte complet (mêmes données que l'ancien system prompt) + la question,
+  // copiés dans le presse-papier. Le projet Claude s'ouvre pour collage manuel.
+  const ctx = buildCtx() + '\n\n---\n\nQuestion : ' + q;
   navigator.clipboard.writeText(ctx).then(() => {
     window.open(CLAUDE_PROJECT_URL, '_blank');
-    showToast('Contexte copié · Colle-le dans Claude ⌘V');
+    showToast('Contexte copié · Colle-le dans Claude (⌘V / Ctrl+V)');
   }).catch(() => {
     window.open(CLAUDE_PROJECT_URL, '_blank');
     showToast('Ouvre Claude et pose ta question');
@@ -1481,90 +1444,20 @@ function showToast(msg) {
   t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
 }
 
-async function sendChat() {
+function sendChat() {
   const inp = document.getElementById('coach-input');
   const q = inp.value.trim();
   if (!q) return;
   inp.value = '';
-  inp.disabled = true;
 
   const hist = document.getElementById('chat-history');
   hist.innerHTML += `<div class="msg mu3"><div class="mb2">${q.replace(/</g,'&lt;')}</div></div>`;
   const lid = 'l' + Date.now();
-  hist.innerHTML += `<div class="msg mai" id="${lid}"><div class="mb2"><span class="ct">…</span></div></div>`;
+  hist.innerHTML += `<div class="msg mai" id="${lid}"><div class="mb2"><span class="ct">Contexte copié — colle-le dans l'onglet Claude qui vient de s'ouvrir (⌘V / Ctrl+V), la question est déjà incluse.</span></div></div>`;
   hist.scrollTop = hist.scrollHeight;
 
-  S.chatHistory.push({role:'user', content:q});
-
-  try {
-    const data = await callAI(S.chatHistory.slice(-8), buildCtx(), 1200);
-    const ans  = extractText(data) || 'Erreur.';
-    S.chatHistory.push({role:'assistant', content:ans});
-
-    // Détecter un bloc JSON icu_workout dans la réponse
-    const workout = extractWorkout(ans);
-    const cleanAns = ans.replace(/```[\s\S]*?```/g, '').trim();
-
-    const msgEl = document.getElementById(lid).querySelector('.mb2');
-    msgEl.textContent = cleanAns;
-
-    // Bouton "Envoyer sur ICU" si une séance structurée est détectée
-    if (workout) {
-      const btn = document.createElement('button');
-      btn.className = 'bp';
-      btn.style.cssText = 'margin-top:10px;font-size:12px;padding:7px 14px';
-      btn.innerHTML = '<i class="ti ti-calendar-plus"></i> Envoyer sur ICU';
-      btn.onclick = () => sendToICU(workout, btn);
-      document.getElementById(lid).querySelector('.mb2').after(btn);
-    }
-  } catch(e) {
-    document.getElementById(lid).querySelector('.mb2').textContent = 'Erreur de connexion.';
-  }
-  inp.disabled = false;
+  askCoach(q);
   inp.focus();
-  hist.scrollTop = hist.scrollHeight;
-}
-
-// Extraire un bloc icu_workout du texte de réponse
-function extractWorkout(text) {
-  // Cherche ```json ... ``` avec un champ icu_workout
-  const m = text.match(/```(?:json)?\s*(\{[\s\S]*?"icu_workout"[\s\S]*?\})\s*```/i);
-  if (m) {
-    try { return JSON.parse(m[1]).icu_workout || JSON.parse(m[1]); } catch(_) {}
-  }
-  // Cherche directement { "icu_workout": ... }
-  const m2 = text.match(/\{\s*"icu_workout"\s*:([\s\S]*?)\}/);
-  if (m2) {
-    try { return JSON.parse('{' + '"icu_workout":' + m2[1] + '}').icu_workout; } catch(_) {}
-  }
-  return null;
-}
-
-// Envoyer la séance sur ICU via server.py
-async function sendToICU(workout, btn) {
-  btn.disabled = true;
-  btn.innerHTML = '<i class="ti ti-loader" style="animation:spin .7s linear infinite"></i> Envoi…';
-  try {
-    const res = await fetch('http://localhost:8765/workout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(workout),
-      signal: AbortSignal.timeout(8000)
-    });
-    const data = await res.json();
-    if (data.ok) {
-      btn.innerHTML = '<i class="ti ti-check"></i> Ajouté au calendrier ICU !';
-      btn.style.background = 'var(--green)';
-      showToast('✓ Séance envoyée sur Intervals.icu · Sync Garmin dans ~1min');
-    } else {
-      throw new Error(data.error || 'Erreur ICU');
-    }
-  } catch(e) {
-    btn.innerHTML = '<i class="ti ti-alert-triangle"></i> Échec — server.py actif ?';
-    btn.style.background = 'var(--red)';
-    btn.disabled = false;
-    showToast('Erreur : ' + e.message);
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
