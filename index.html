@@ -458,11 +458,11 @@ const ICU_SNAPSHOT = {
 //  APPEL API ANTHROPIC — direct, sans MCP (données dans system prompt)
 // ═══════════════════════════════════════════════════════════════════
 async function callAI(messages, system, maxTokens = 1000) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch('https://patient-flower-4cb6.jeangay1961.workers.dev/coach', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-5',
       max_tokens: maxTokens,
       system: system || buildCtx(),
       messages
