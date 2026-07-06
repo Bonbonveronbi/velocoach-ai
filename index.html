@@ -474,30 +474,10 @@ const ICU_SNAPSHOT = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-//  APPEL API ANTHROPIC — direct, sans MCP (données dans system prompt)
+//  Pas d'appel API direct depuis le navigateur (CORS/401) — toute
+//  interaction "Coach" passe par copier-coller vers le projet Claude
+//  dédié (voir askCoach() / sendChat() plus bas).
 // ═══════════════════════════════════════════════════════════════════
-async function callAI(messages, system, maxTokens = 1000) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: maxTokens,
-      system: system || buildCtx(),
-      messages
-    })
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`API ${res.status}: ${err.slice(0,150)}`);
-  }
-  return res.json();
-}
-
-function extractText(data) {
-  if (!data || !data.content) return '';
-  return data.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
-}
 
 // ═══════════════════════════════════════════════════════════════════
 //  INIT — tente le serveur local, fallback sur snapshot embarqué
@@ -1409,7 +1389,7 @@ Syntaxe description ICU (% du FTP ${S.eftp||222}W) :
 Les % sont calculés sur FTP ${S.eftp||222}W. Ex: 88% = ${Math.round((S.eftp||222)*0.88)}W, 94% = ${Math.round((S.eftp||222)*0.94)}W, 110% = ${Math.round((S.eftp||222)*1.10)}W.`;
 }
 
-async function generateAutoCoach() {
+function generateAutoCoach() {
   const el = document.getElementById('coach-auto');
   const today = new Date().toLocaleDateString('fr-FR', {weekday:'long',day:'numeric',month:'long'});
   document.getElementById('coach-date-label').textContent = `Analyse du ${today}`;
@@ -1417,24 +1397,11 @@ async function generateAutoCoach() {
   const w = S.wellness.length
     ? [...S.wellness].sort((a,b)=>b.date.localeCompare(a.date))[0]
     : {};
+  const tsb = S.tsb ? Math.round(S.tsb) : '?';
+  const hrv = w.hrv ?? '?';
+  const hr  = w.restingHR ?? '?';
 
-  try {
-    const data = await callAI([{
-      role:'user',
-      content:`Bilan du jour S28 (semaine plateau, pas d'escalade — décision prise suite au bilan S27) :
-- CTL=${S.ctl?S.ctl.toFixed(1):'68'}, ATL=${S.atl?S.atl.toFixed(1):'75'}, TSB=${S.tsb?S.tsb.toFixed(1):'-7'}
-- HRV=${w.hrv||'?'} ms, HR repos=${w.restingHR||'?'} bpm
-Analyse : état de récupération, risques à surveiller, recommandation précise pour aujourd'hui et pour les 3 prochains jours.
-Format : sections courtes avec emoji, chiffres précis, explication physiologique en 1-2 phrases max par point.`
-    }], buildCtx(), 900);
-    const text = extractText(data);
-    el.textContent = text || 'Analyse indisponible.';
-  } catch(e) {
-    const tsb = S.tsb ? Math.round(S.tsb) : '?';
-    const hrv = S.wellness[0]?.hrv || '?';
-    const hr = S.wellness[0]?.restingHR || '?';
-    el.textContent = `S28 — Plateau (pas d'escalade)\n\n📊 TSB = ${tsb} · HRV = ${hrv} ms · HR repos = ${hr} bpm\n\nBilan S27 : decoupling +24,9% sur la sortie du 4 juillet (Bort-les-Orgues) → signal de fatigue cardiovasculaire malgré un ressenti facile (3/10). TSB fin de bloc −11,6. Décision : S28 vise un plateau à 4300-4400 kJ (comme S27), pas une progression — le levier cette semaine est la qualité d'exécution du seuil, pas le volume.\n\n💡 Aujourd'hui : si HRV reste bas (<30 ms) ou nuit courte → basculer la séance de seuil prévue en Z2 modérée.\n\n🎯 Cette semaine : 1 seule séance VO2max, 2 séances de qualité max, musculation 2×, budget kJ à surveiller après le dépassement du lundi.`;
-  }
+  el.textContent = `S${S.weekNum} — Plateau (pas d'escalade)\n\n📊 TSB = ${tsb} · HRV = ${hrv} ms · HR repos = ${hr} bpm\n\nBilan S27 : decoupling +24,9% sur la sortie du 4 juillet (Bort-les-Orgues) → signal de fatigue cardiovasculaire malgré un ressenti facile (3/10). TSB fin de bloc −11,6. Décision : S28 vise un plateau kJ (pas une progression) — le levier cette semaine est la qualité d'exécution du seuil, pas le volume.\n\n💡 Aujourd'hui : si HRV reste bas (<30 ms) ou nuit courte → basculer la séance de seuil prévue en Z2 modérée.\n\n🎯 Cette semaine : 1 seule séance VO2max, 2 séances de qualité max, musculation 2×, budget kJ à surveiller.\n\nPour une analyse approfondie et personnalisée, utilise les questions rapides ci-dessous ou le champ de discussion — ça copie le contexte ICU du jour et ouvre le projet Claude dédié.`;
 }
 
 // ─── URL du projet Claude — remplacer par l'URL réelle du projet ───
@@ -1479,34 +1446,22 @@ function showToast(msg) {
   t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
 }
 
-async function sendChat() {
+function sendChat() {
   const inp = document.getElementById('coach-input');
   const q = inp.value.trim();
   if (!q) return;
   inp.value = '';
-  inp.disabled = true;
 
   const hist = document.getElementById('chat-history');
-  hist.innerHTML += `<div class="msg mu3"><div class="mb2">${q.replace(/</g,'&lt;')}</div></div>`;
-  const lid = 'l' + Date.now();
-  hist.innerHTML += `<div class="msg mai" id="${lid}"><div class="mb2"><span class="ct">…</span></div></div>`;
-  hist.scrollTop = hist.scrollHeight;
 
-  S.chatHistory.push({role:'user', content:q});
-
-  try {
-    const data = await callAI(S.chatHistory.slice(-8), buildCtx(), 1200);
-    const ans  = extractText(data) || 'Erreur.';
-    S.chatHistory.push({role:'assistant', content:ans});
-
-    // Détecter un bloc JSON icu_workout dans la réponse
-    const workout = extractWorkout(ans);
-    const cleanAns = ans.replace(/```[\s\S]*?```/g, '').trim();
-
-    const msgEl = document.getElementById(lid).querySelector('.mb2');
-    msgEl.textContent = cleanAns;
-
-    // Bouton "Envoyer sur ICU" si une séance structurée est détectée
+  // Cas 1 : l'utilisateur COLLE la réponse de Claude (contient un bloc icu_workout)
+  // → on l'affiche et on propose l'envoi ICU, sans rien renvoyer sur le réseau.
+  if (q.includes('icu_workout')) {
+    const workout = extractWorkout(q);
+    const cleanAns = q.replace(/```[\s\S]*?```/g, '').trim() || q;
+    const lid = 'l' + Date.now();
+    hist.innerHTML += `<div class="msg mai" id="${lid}"><div class="mb2"></div></div>`;
+    document.getElementById(lid).querySelector('.mb2').textContent = cleanAns;
     if (workout) {
       const btn = document.createElement('button');
       btn.className = 'bp';
@@ -1515,12 +1470,17 @@ async function sendChat() {
       btn.onclick = () => sendToICU(workout, btn);
       document.getElementById(lid).querySelector('.mb2').after(btn);
     }
-  } catch(e) {
-    document.getElementById(lid).querySelector('.mb2').textContent = 'Erreur de connexion.';
+    hist.scrollTop = hist.scrollHeight;
+    return;
   }
-  inp.disabled = false;
-  inp.focus();
+
+  // Cas 2 : nouvelle question → même mécanisme que les puces rapides.
+  // Pas d'appel API direct (CORS/401 depuis le navigateur) : on copie le
+  // contexte ICU du jour + la question, et on ouvre le projet Claude dédié.
+  hist.innerHTML += `<div class="msg mu3"><div class="mb2">${q.replace(/</g,'&lt;')}</div></div>`;
+  hist.innerHTML += `<div class="msg mai"><div class="mb2"><span class="ct">Contexte copié → colle-le dans Claude, puis colle sa réponse ici pour l'archiver (et détecter une séance à envoyer sur ICU).</span></div></div>`;
   hist.scrollTop = hist.scrollHeight;
+  askCoach(q);
 }
 
 // Extraire un bloc icu_workout du texte de réponse
