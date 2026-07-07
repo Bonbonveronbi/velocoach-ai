@@ -1,165 +1,174 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-VeloCoach AI - serveur local ICU
-Lance avec : "E:\\python\\python.exe" server.py
-Repond sur http://localhost:8765
+VeloCoach AI — serveur local
+- Sert les fichiers statiques (index.html) sur http://localhost:8765/
+- GET  /all      -> wellness (42 j) + activities (45 j) depuis Intervals.icu
+- POST /workout  -> crée une séance structurée dans le calendrier ICU
+Aucune dépendance externe : Python 3 standard uniquement.
+
+Lancer :  python server.py
 """
-import http.server, urllib.request, urllib.error, json, base64, threading, os
-from datetime import date, timedelta
 
-API_KEY    = "38iemxjyvrau0u5qbao3nkrlg"
-ATHLETE_ID = "45440995"
-PORT       = 8765
-BASE       = f"https://intervals.icu/api/v1/athlete/{ATHLETE_ID}"
-AUTH       = base64.b64encode(f"API_KEY:{API_KEY}".encode()).decode()
-HEADERS    = {
-    "Authorization": f"Basic {AUTH}",
-    "Accept": "application/json",
-    "User-Agent": "VeloCoachAI/1.0"
-}
+import sys
+# FIX Windows : la console cp1252 par défaut plante sur les caractères
+# unicode (→, ⚠, etc.) utilisés dans les print() ci-dessous. On force
+# stdout/stderr en UTF-8 (Python 3.7+).
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
-# Dossier contenant index.html (même dossier que server.py)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+import json
+import base64
+import datetime
+import urllib.request
+import urllib.error
+from concurrent.futures import ThreadPoolExecutor
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from functools import partial
+from http.server import SimpleHTTPRequestHandler
 
-def icu_get(path):
-    req = urllib.request.Request(BASE + path, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=15) as r:
-        return json.loads(r.read())
+# ════════════════════════════════════════════════════════════════════
+#  CONFIG  —  À RENSEIGNER
+# ════════════════════════════════════════════════════════════════════
+ICU_ATHLETE_ID = "45440995"                 # sans le préfixe "i"
+ICU_API_KEY    = "6k0yg9vyahohhoowgzih2u87y"     # Settings > Developer > API Key
+PORT           = 8765
+WELLNESS_DAYS  = 42
+ACT_DAYS       = 45
+# ════════════════════════════════════════════════════════════════════
 
-def icu_post(path, payload):
-    body = json.dumps(payload).encode()
-    req  = urllib.request.Request(
-        BASE + path, data=body,
-        headers={**HEADERS, "Content-Type": "application/json"},
-        method="POST"
-    )
-    with urllib.request.urlopen(req, timeout=15) as r:
-        return json.loads(r.read())
+ICU_BASE = "https://intervals.icu/api/v1"
 
-class Handler(http.server.BaseHTTPRequestHandler):
-    def log_message(self, *a): pass
 
-    def do_OPTIONS(self):
-        self.send_response(204)
-        self._cors()
-        self.end_headers()
+def _auth_header():
+    # ICU : Basic auth, username littéral "API_KEY", password = la clé
+    raw = f"API_KEY:{ICU_API_KEY}".encode("utf-8")
+    return "Basic " + base64.b64encode(raw).decode("ascii")
 
-    def do_GET(self):
-        # Sert index.html sur / ou /index.html
-        if self.path.split('?')[0] in ('/', '/index.html'):
-            html_path = os.path.join(BASE_DIR, 'index.html')
-            try:
-                with open(html_path, 'rb') as f:
-                    body = f.read()
-                self.send_response(200)
-                self.send_header('Content-Type', 'text/html; charset=utf-8')
-                self.send_header('Content-Length', str(len(body)))
-                self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
-                self.end_headers()
-                self.wfile.write(body)
-            except FileNotFoundError:
-                self._error(404, 'index.html introuvable')
-            return
 
-        # GET /all ou /wellness+activites
-        if self.path.split('?')[0] in ('/all', '/data'):
-            today = date.today().isoformat()
-            d20   = (date.today() - timedelta(days=20)).isoformat()
-            d45   = (date.today() - timedelta(days=45)).isoformat()
+def _icu_get(path):
+    req = urllib.request.Request(ICU_BASE + path, method="GET")
+    req.add_header("Authorization", _auth_header())
+    req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) VeloCoach/1.0")
+    req.add_header("Accept", "application/json")
+    with urllib.request.urlopen(req, timeout=20) as r:
+        return json.loads(r.read().decode("utf-8"))
 
-            results = {}
-            errors  = {}
 
-            def fetch_wellness():
-                try:
-                    results["wellness"] = icu_get(f"/wellness?oldest={d20}&newest={today}")
-                except Exception as e:
-                    errors["wellness"] = str(e)
+def _icu_post(path, body):
+    data = json.dumps(body).encode("utf-8")
+    req = urllib.request.Request(ICU_BASE + path, data=data, method="POST")
+    req.add_header("Authorization", _auth_header())
+    req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) VeloCoach/1.0")
+    req.add_header("Content-Type", "application/json")
+    with urllib.request.urlopen(req, timeout=20) as r:
+        return json.loads(r.read().decode("utf-8"))
 
-            def fetch_activities():
-                try:
-                    acts = icu_get(f"/activities?oldest={d45}&newest={today}&limit=20")
-                    acts.sort(key=lambda a: a.get("start_date_local", ""), reverse=True)
-                    results["activities"] = acts
-                except Exception as e:
-                    errors["activities"] = str(e)
 
-            t1 = threading.Thread(target=fetch_wellness)
-            t2 = threading.Thread(target=fetch_activities)
-            t1.start(); t2.start()
-            t1.join(); t2.join()
+def fetch_all():
+    today = datetime.date.today()
+    w_old = (today - datetime.timedelta(days=WELLNESS_DAYS)).isoformat()
+    a_old = (today - datetime.timedelta(days=ACT_DAYS)).isoformat()
+    newest = today.isoformat()
 
-            self._json({
-                "wellness":   results.get("wellness", []),
-                "activities": results.get("activities", []),
-                "generated":  today,
-                **({"errors": errors} if errors else {})
-            })
-            return
+    out = {"wellness": [], "activities": [],
+           "generated": newest, "errors": {}}
 
-        self._error(404, "Not found")
+    # Les 2 appels ICU sont indépendants -> on les lance en parallèle
+    # pour rester bien sous le timeout de 15s côté navigateur.
+    with ThreadPoolExecutor(max_workers=2) as ex:
+        fut_w = ex.submit(_icu_get,
+            f"/athlete/{ICU_ATHLETE_ID}/wellness?oldest={w_old}&newest={newest}")
+        fut_a = ex.submit(_icu_get,
+            f"/athlete/{ICU_ATHLETE_ID}/activities?oldest={a_old}&newest={newest}")
 
-    def do_POST(self):
-        if self.path != "/workout":
-            self._error(404, "Not found"); return
         try:
-            length  = int(self.headers.get("Content-Length", 0))
-            payload = json.loads(self.rfile.read(length))
-            event = {
-                "category":         "WORKOUT",
-                "start_date_local": payload["date"] + "T09:00:00",
-                "name":             payload.get("name", "Seance VeloCoach"),
-                "description":      payload.get("description", ""),
-                "type":             payload.get("type", "Ride"),
-                "indoor":           payload.get("indoor", False),
-            }
-            if payload.get("load"):
-                event["load"] = payload["load"]
-            result = icu_post("/events", event)
-            self._json({"ok": True, "event_id": result.get("id"), "event": result})
+            out["wellness"] = fut_w.result()
         except urllib.error.HTTPError as e:
-            self._error(e.code, f"ICU {e.code}: {e.read().decode()}")
+            out["errors"]["wellness"] = f"HTTP Error {e.code}: {e.reason}"
         except Exception as e:
-            self._error(502, str(e))
+            out["errors"]["wellness"] = str(e)
 
-    def _json(self, data):
         try:
-            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
-            self.send_response(200)
-            self._cors()
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
-            self.wfile.flush()
-        except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError):
-            pass
+            out["activities"] = fut_a.result()
+        except urllib.error.HTTPError as e:
+            out["errors"]["activities"] = f"HTTP Error {e.code}: {e.reason}"
+        except Exception as e:
+            out["errors"]["activities"] = str(e)
 
-    def _error(self, code, msg):
-        try:
-            body = json.dumps({"error": msg}).encode("utf-8")
-            self.send_response(code)
-            self._cors()
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
-            self.wfile.flush()
-        except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError):
-            pass
+    return out
 
-    def _cors(self):
+
+def create_workout(w):
+    """w = {name, date, type, load, description}"""
+    date = w.get("date") or datetime.date.today().isoformat()
+    body = {
+        "category":          "WORKOUT",
+        "start_date_local":  f"{date}T00:00:00",
+        "type":              w.get("type", "Ride"),
+        "name":              w.get("name", "Séance VeloCoach"),
+        "description":       w.get("description", ""),
+    }
+    if w.get("load"):
+        body["icu_training_load"] = int(w["load"])
+    created = _icu_post(f"/athlete/{ICU_ATHLETE_ID}/events", body)
+    return {"ok": True, "id": created.get("id"), "event": created}
+
+
+class Handler(SimpleHTTPRequestHandler):
+
+    def _send_json(self, obj, code=200):
+        payload = json.dumps(obj).encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
+
+    def do_GET(self):
+        if self.path.split("?")[0] == "/all":
+            try:
+                self._send_json(fetch_all())
+            except Exception as e:
+                self._send_json({"error": str(e)}, 500)
+            return
+        # sinon : fichiers statiques (index.html, etc.)
+        super().do_GET()
+
+    def do_POST(self):
+        if self.path.split("?")[0] == "/workout":
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(length).decode("utf-8"))
+                self._send_json(create_workout(body))
+            except urllib.error.HTTPError as e:
+                self._send_json({"ok": False,
+                                 "error": f"ICU {e.code}: {e.reason}"}, 200)
+            except Exception as e:
+                self._send_json({"ok": False, "error": str(e)}, 200)
+            return
+        self.send_error(404)
+
+    def log_message(self, fmt, *args):
+        print("·", fmt % args)
+
 
 if __name__ == "__main__":
-    server = http.server.HTTPServer(("localhost", PORT), Handler)
-    print(f"VeloCoach ICU server -> http://localhost:{PORT}")
-    print(f"  Ouvre http://localhost:{PORT} dans ton navigateur")
-    print(f"  GET  /all      -> wellness + activites ICU")
-    print(f"  POST /workout  -> cree une seance sur ICU")
-    print("Ctrl+C pour arreter")
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("\nArret.")
+    if ICU_API_KEY == "COLLE_TA_CLE_API_ICI":
+        print("[!] Renseigne ICU_API_KEY en haut du fichier (Settings > Developer).")
+    print(f"VeloCoach server -> http://localhost:{PORT}/index.html")
+    print(f"  test API       -> http://localhost:{PORT}/all")
+    ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()

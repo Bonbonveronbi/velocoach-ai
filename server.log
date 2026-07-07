@@ -1,0 +1,113 @@
+Traceback (most recent call last):
+  File "C:\Users\Jean Jacques\Documents\velocoach-ai\server.py", line 157, in <module>
+    print(f"VeloCoach server \u2192 http://localhost:{PORT}/index.html")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\python\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 17: character maps to <undefined>
+^C^C----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 53846)
+Traceback (most recent call last):
+  File "C:\Users\Jean Jacques\Documents\velocoach-ai\server.py", line 139, in do_GET
+    self._send_json(fetch_all())
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Jean Jacques\Documents\velocoach-ai\server.py", line 127, in _send_json
+    self.wfile.write(payload)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "E:\python\Lib\socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] Une connexion établie a été abandonnée par un logiciel de votre ordinateur hôte
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "E:\python\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\python\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\python\Lib\http\server.py", line 732, in __init__
+    super().__init__(*args, **kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "E:\python\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "E:\python\Lib\http\server.py", line 496, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "E:\python\Lib\http\server.py", line 484, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "C:\Users\Jean Jacques\Documents\velocoach-ai\server.py", line 141, in do_GET
+    self._send_json({"error": str(e)}, 500)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Jean Jacques\Documents\velocoach-ai\server.py", line 126, in _send_json
+    self.end_headers()
+    ~~~~~~~~~~~~~~~~^^
+  File "E:\python\Lib\http\server.py", line 598, in end_headers
+    self.flush_headers()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "E:\python\Lib\http\server.py", line 602, in flush_headers
+    self.wfile.write(b"".join(self._headers_buffer))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\python\Lib\socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] Une connexion établie a été abandonnée par un logiciel de votre ordinateur hôte
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 53900)
+Traceback (most recent call last):
+  File "C:\Users\Jean Jacques\Documents\velocoach-ai\server.py", line 139, in do_GET
+    self._send_json(fetch_all())
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Jean Jacques\Documents\velocoach-ai\server.py", line 127, in _send_json
+    self.wfile.write(payload)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "E:\python\Lib\socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] Une connexion établie a été abandonnée par un logiciel de votre ordinateur hôte
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "E:\python\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\python\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\python\Lib\http\server.py", line 732, in __init__
+    super().__init__(*args, **kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "E:\python\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "E:\python\Lib\http\server.py", line 496, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "E:\python\Lib\http\server.py", line 484, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "C:\Users\Jean Jacques\Documents\velocoach-ai\server.py", line 141, in do_GET
+    self._send_json({"error": str(e)}, 500)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Jean Jacques\Documents\velocoach-ai\server.py", line 126, in _send_json
+    self.end_headers()
+    ~~~~~~~~~~~~~~~~^^
+  File "E:\python\Lib\http\server.py", line 598, in end_headers
+    self.flush_headers()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "E:\python\Lib\http\server.py", line 602, in flush_headers
+    self.wfile.write(b"".join(self._headers_buffer))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\python\Lib\socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] Une connexion établie a été abandonnée par un logiciel de votre ordinateur hôte
+----------------------------------------
+^C
