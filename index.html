@@ -182,7 +182,7 @@ h1{font-size:17px;font-weight:500}
       <div style="display:flex;gap:14px;font-size:12px;color:var(--mu);flex-wrap:wrap">
         <span><span style="display:inline-block;width:12px;height:2px;background:#185FA5;vertical-align:middle;margin-right:4px"></span>MMP réelle</span>
         <span><span style="display:inline-block;width:12px;height:0;border-top:2px dashed #B4B2A9;vertical-align:middle;margin-right:4px"></span>Référence FTP équilibré</span>
-        <span><span style="display:inline-block;width:12px;height:0;border-top:2px dashed #1D9E75;vertical-align:middle;margin-right:4px"></span>Cible 3.5 w/kg (×${(3.5*69/222).toFixed(2)})</span>
+        <span><span style="display:inline-block;width:12px;height:0;border-top:2px dashed #1D9E75;vertical-align:middle;margin-right:4px"></span>Cible 3.5 w/kg</span>
       </div>
       <div style="display:flex;gap:6px">
         <button class="bs" id="btn-w" onclick="toggleMMP('watts')"><i class="ti ti-bolt" style="font-size:12px"></i> Watts</button>
@@ -273,7 +273,7 @@ h1{font-size:17px;font-weight:500}
   <p class="st">Questions rapides</p>
   <div class="chips">
     <button class="chip" onclick="askCoach('Explique mes lacunes MMP prioritaires et les séances pour les combler cette semaine')"><i class="ti ti-chart-line" style="font-size:12px"></i> Lacunes MMP</button>
-    <button class="chip" onclick="askCoach('Plan FTP 8 semaines pour atteindre 3.5 w/kg à 69 kg depuis 222W')"><i class="ti ti-target" style="font-size:12px"></i> Plan FTP</button>
+    <button class="chip" onclick="askCoach('Plan FTP 8 semaines pour atteindre 3.5 w/kg à 69 kg')"><i class="ti ti-target" style="font-size:12px"></i> Plan FTP</button>
     <button class="chip" onclick="askCoach('Analyse mon état de forme actuel CTL/ATL/TSB et HRV et recommande la semaine optimale')"><i class="ti ti-heartbeat" style="font-size:12px"></i> Forme actuelle</button>
     <button class="chip" onclick="askCoach('Comment améliorer mon endurance seuil 1h, lacune principale MMP ?')"><i class="ti ti-trending-up" style="font-size:12px"></i> Endurance seuil</button>
     <button class="chip" onclick="askCoach('Quels exercices musculation pour cycliste master 64 ans contre sarcopénie ?')"><i class="ti ti-barbell" style="font-size:12px"></i> Musculation</button>
@@ -293,7 +293,7 @@ h1{font-size:17px;font-weight:500}
 //  ÉTAT GLOBAL — rempli par les appels API
 // ═══════════════════════════════════════════════════════════════════
 const S = {
-  weight: 69,       // hardcodé — valeur Strava erronée dans ICU
+  weight: 69,       // valeur confirmée correcte (l'ancienne valeur Strava erronée a été corrigée sur ICU)
   ftp: 222,
   lthr: 150,
   hrMax: 166,
@@ -305,13 +305,12 @@ const S = {
   chatHistory: [],
   mmpMode: 'watts',
   selectedBloc: null,
-  weekNum: 28,      // S28 — semaine actuelle ISO
+  weekNum: 28,      // S28 — semaine actuelle ISO (pic pré-deload, S29 = deload)
 };
 
 // ═══════════════════════════════════════════════════════════════════
-//  MMP réelle — issue de la dernière session ICU (via coach)
-//  Ces valeurs sont les données réelles ICU, conservées comme
-//  fallback si la courbe live ne charge pas.
+//  MMP réelle — dernier test seuil ancré (06/06/2026, FTP_UP 222W)
+//  Conservée comme fallback si la courbe live ne charge pas.
 // ═══════════════════════════════════════════════════════════════════
 const MMP_REAL = {
   labels:['1s','5s','10s','30s','1min','2min','5min','10min','20min','30min','1h','2h'],
@@ -320,7 +319,7 @@ const MMP_REAL = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-//  BLOCS — structure semaines (KJ réels depuis ICU pour S21-S24)
+//  BLOCS — structure semaines (KJ réels ICU, vérifiés le 10/07/2026)
 // ═══════════════════════════════════════════════════════════════════
 const BLOCS = [
   {iso:21,dates:'18–24/05',type:'charge',ordre:'C1/3',cible:4200,reel:3270,
@@ -340,7 +339,7 @@ const BLOCS = [
     {j:'Mer 27',lab:'Veyrières',type:'Z2',r:812},
     {j:'Jeu 28',lab:'Repos',type:'R',r:0},
     {j:'Ven 29',lab:'Sweet Spot 3×8',type:'SS',r:660},
-    {j:'Sam 30',lab:'Tour-d\'Auvergne',type:'A',r:1545},
+    {j:'Sam 30',lab:"Tour-d'Auvergne",type:'A',r:1545},
     {j:'Dim 31',lab:'Repos',type:'R',r:0},
    ]},
   {iso:23,dates:'01–07/06',type:'charge',ordre:'C3/3',cible:4738,reel:5071,
@@ -366,75 +365,87 @@ const BLOCS = [
   {iso:25,dates:'15–21/06',type:'recup',ordre:'Récup',cible:3200,reel:2955,
    days:[
     {j:'Lun 15',lab:'Veyrières',type:'R',r:323},
-    {j:'Mar 16',lab:'Veyrières',type:'R',r:619},
+    {j:'Mar 16',lab:'Veyrières',type:'Z2',r:619},
     {j:'Mer 17',lab:'Veyrières',type:'R',r:354},
     {j:'Jeu 18',lab:'Repos',type:'R',r:0},
     {j:'Ven 19',lab:'Veyrières',type:'R',r:145},
-    {j:'Sam 20',lab:'Bort-les-Orgues (hors plan)',type:'A',r:1514},
+    {j:'Sam 20',lab:'Bort-les-Orgues',type:'A',r:1514},
     {j:'Dim 21',lab:'Repos',type:'R',r:0},
    ]},
-  {iso:26,dates:'22–28/06',type:'charge',ordre:'Reprise 1/2',cible:4300,reel:4079,
+  {iso:26,dates:'22–28/06',type:'charge',ordre:'C1/3',cible:4200,reel:4079,
    days:[
-    {j:'Lun 22',lab:'Sortie vélo matin',type:'R',r:583},
+    {j:'Lun 22',lab:'Sortie vélo le matin',type:'Z2',r:583},
     {j:'Mar 23',lab:'Repos',type:'R',r:0},
-    {j:'Mer 24',lab:'Home trainer soir',type:'SS',r:516},
-    {j:'Jeu 25',lab:'Z2 endurance',type:'Z2',r:749},
+    {j:'Mer 24',lab:'Night (virtuel)',type:'Z2',r:516},
+    {j:'Jeu 25',lab:'Z2 endurance — assimilation SS',type:'Z2',r:749},
     {j:'Ven 26',lab:'Veyrières',type:'R',r:313},
-    {j:'Sam 27',lab:'SS 2×20 sortie club',type:'SS',r:1400},
-    {j:'Dim 28',lab:'Veyrières',type:'R',r:518},
+    {j:'Sam 27',lab:'Veyrières SS 2×20 — sortie club',type:'A',r:1400},
+    {j:'Dim 28',lab:'Veyrières',type:'Z2',r:518},
    ]},
-  {iso:27,dates:'29/06–05/07',type:'charge',ordre:'Reprise 2/2',cible:4500,reel:4271,
+  {iso:27,dates:'29/06–05/07',type:'charge',ordre:'C2/3',cible:4550,reel:4271,
    days:[
-    {j:'Lun 29',lab:'SS 2×20 endurance seuil',type:'SS',r:772},
+    {j:'Lun 29',lab:'SS 2×20min — endurance seuil 1h',type:'SS',r:772},
     {j:'Mar 30',lab:'Veyrières + Muscu J1',type:'R',r:161},
-    {j:'Mer 01',lab:'Z2 1h30 + Bort récup',type:'Z2',r:1181},
-    {j:'Jeu 02',lab:'Sweet Spot 3×15',type:'SS',r:665},
+    {j:'Mer 01',lab:'Z2 + Bort-les-Orgues (double)',type:'Z2',r:1181},
+    {j:'Jeu 02',lab:'SS 3×15min — volume seuil',type:'SS',r:665},
     {j:'Ven 03',lab:'Repos',type:'R',r:0},
     {j:'Sam 04',lab:'Bort-les-Orgues',type:'A',r:1492},
     {j:'Dim 05',lab:'Repos',type:'R',r:0},
    ]},
-  {iso:28,dates:'06–12/07',type:'charge',ordre:'Transition',cible:3800,reel:1257,current:true,
+  {iso:28,dates:'06–12/07',type:'charge',ordre:'C3/3 — Pic pré-deload',cible:4900,reel:2730,current:true,
    days:[
-    {j:'Lun 06',lab:'Z2 reprise douce',type:'Z2',r:798},
-    {j:'Mar 07',lab:'VO2max 5×4min',type:'A',r:459},
-    {j:'Mer 08',lab:'À planifier',type:'R',r:null},
-    {j:'Jeu 09',lab:'À planifier',type:'R',r:null},
-    {j:'Ven 10',lab:'À planifier',type:'R',r:null},
-    {j:'Sam 11',lab:'À planifier',type:'R',r:null},
-    {j:'Dim 12',lab:'À planifier',type:'R',r:null},
+    {j:'Lun 06',lab:'Z2 reprise douce — transition S28',type:'Z2',r:798},
+    {j:'Mar 07',lab:'VO2max 5×4min — PMA (permuté)',type:'A',r:459},
+    {j:'Mer 08',lab:'Veyrières',type:'Z2',r:555},
+    {j:'Jeu 09',lab:'Repos',type:'R',r:0},
+    {j:'Ven 10',lab:'Sweet Spot 4×16min (SS, 3 prévues +1)',type:'SS',r:918},
+    {j:'Sam 11',lab:'Sortie longue — bouclage pic',type:'A',r:null},
+    {j:'Dim 12',lab:'Repos total',type:'R',r:null},
+   ]},
+  {iso:29,dates:'13–19/07',type:'recup',ordre:'Deload',cible:2400,
+   days:[
+    {j:'Lun 13',lab:'Repos',type:'R',r:null},
+    {j:'Mar 14',lab:'Z1 récup',type:'R',r:null},
+    {j:'Mer 15',lab:'Z2 courte',type:'Z2',r:null},
+    {j:'Jeu 16',lab:'Repos',type:'R',r:null},
+    {j:'Ven 17',lab:'Z1 récup active',type:'R',r:null},
+    {j:'Sam 18',lab:'Z2 + activations',type:'Z2',r:null},
+    {j:'Dim 19',lab:'Repos total',type:'R',r:null},
    ]},
 ];
 
 // ═══════════════════════════════════════════════════════════════════
-//  SÉANCES S25 — adaptées récupération
+//  SÉANCES — fin S28 (pic pré-deload) + entrée S29 (deload)
 // ═══════════════════════════════════════════════════════════════════
-const SEANCES_S25 = [
-  {type:'R',day:'Mar 16/06',title:'Z1 Récupération 45min',sub:'Si HRV matin >40 ms seulement',kj:'~300 kJ',
-   blocks:[{c:'wz1',l:'45 min Z1 — 55-110W',d:'FC <95 bpm · Cadence libre · RPE 2/10'}],
-   note:'Si HRV <35 ce matin → repos total. La fatigue prime sur le programme.'},
-  {type:'Z2',day:'Mer 17/06',title:'Z2 Endurance 1h30',sub:'Flux sanguin, lipolyse, pas de stimuli nouveaux',kj:'~700 kJ',
-   blocks:[{c:'wz2',l:'10 min Z1 échauffement',d:'55-122W · FC <100'},{c:'wz2',l:'70 min Z2 — 122-160W',d:'FC 106-125 · EF >1.38 · Ne pas dépasser Z2 même si les jambes répondent'},{c:'wz1',l:'10 min retour Z1',d:'Muscu légère après optionnel : mobilité'}],
-   note:'<strong>Piège :</strong> si tu te sens bien → ne pas glisser en Z3. La supercompensation se construit dans la récup, pas dans un effort supplémentaire.'},
-  {type:'R',day:'Ven 19/06',title:'Récup active 45min',sub:'Maintien du flux sanguin uniquement',kj:'~250 kJ',
-   blocks:[{c:'wz1',l:'45 min Z1 — <110W',d:'Sortie de plaisir, pas d\'objectif · FC libre'}],
-   note:null},
-  {type:'Z2',day:'Sam 20/06',title:'Z2 + Activations 1h15',sub:'Préparer le retour en charge S26',kj:'~550 kJ',
-   blocks:[{c:'wz2',l:'50 min Z2 — 122-160W',d:'FC 106-125'},{c:'wz2',l:'3 × 30s à 250-260W',d:'Activations neuromusculaires · récup 3min Z1 entre · RPE 7 max'},{c:'wz1',l:'15 min retour Z1',d:''}],
-   note:'Les 3×30s servent à "réveiller" le système neuromusculaire avant S26 sans créer de charge. Très différent d\'un vrai travail VO2.'},
+const SEANCES_CURRENT = [
+  {type:'A',day:'Sam 11/07',title:'Sortie longue — bouclage du pic S28',sub:'~2 170 kJ restants pour atteindre la cible 4 900 kJ',kj:'~2 200 kJ',
+   blocks:[
+    {c:'wz2',l:'30 min Z1-Z2 échauffement',d:'55-160W · progressif'},
+    {c:'wz2',l:'Corps de sortie Z2 fractionnée par blocs de col',d:'142-164W en montée, récupération en descente · piloter sur la puissance de la portion roulée, pas la moyenne globale'},
+    {c:'wz4',l:'2×15-20 min Sweet Spot en fin de sortie',d:'193-215W · verrouiller la puissance dès la 1ère minute · teste la résistance à la fatigue tardive (>2000 kJ dépensés)'},
+    {c:'wz1',l:'Retour au calme Z1',d:'10-15 min'}
+   ],
+   note:"Nuit courte hier (5h17) : si les jambes ne répondent pas ou si le HR repos grimpe au réveil, réduire à une sortie Z2 pure sans le bloc SS final — le pic à 4 900 kJ n'est pas non-négociable, S29 l'est."},
+  {type:'R',day:'Dim 12/07',title:'Repos total',sub:'Dernier jour avant deload — supercompensation commence ici',kj:'0 kJ',
+   blocks:[{c:'wz1',l:'Repos complet',d:'Pas de vélo. Mobilité légère / marche autorisée.'}],
+   note:'Dernier verrou avant S29 : aucune sortie "juste pour finir le chiffre".'},
+  {type:'R',day:'Lun 13/07 → Dim 19/07',title:'S29 — Semaine deload (cible ~2 400 kJ, zéro intensité)',sub:'Non-négociable : c\'est ici que la charge de S26-S28 se transforme en forme',kj:'~2 400 kJ total',
+   blocks:[
+    {c:'wz1',l:'Z1/Z2 courtes uniquement',d:'45-90 min max par sortie · aucune séance SS/seuil/VO2max'},
+    {c:'wz1',l:'2 séances musculation légères (technique, pas de charge)',d:'Squat gobelet, RDL léger, gainage'}
+   ],
+   note:'Pattern déjà documenté : le principal obstacle à la progression n\'est pas la capacité physiologique mais la tenue de cette semaine de récupération. Aucune intensité, même si les jambes se sentent bien.'},
 ];
 
 // ═══════════════════════════════════════════════════════════════════
-//  DONNÉES ICU — snapshot 16/06/2026 — générées par Claude via MCP
+//  DONNÉES ICU — snapshot 10/07/2026 — générées via WorkoutContext MCP
 //  Pour actualiser : demander à Claude de régénérer le fichier
 // ═══════════════════════════════════════════════════════════════════
 const ICU_SNAPSHOT = {
-  generated: '2026-07-07',
+  generated: '2026-07-10',
   eftp: 219,
   wellness: [
-    {date:'2026-06-17',ctl:67.4,atl:67.6,hrv:25,hrvSDNN:33,restingHR:48,readiness:7.1,sleepSecs:28800,sleepScore:5,vo2max:51},
-    {date:'2026-06-18',ctl:65.8,atl:58.6,hrv:46,hrvSDNN:48,restingHR:45,readiness:7.9,sleepSecs:28800,sleepScore:5,vo2max:50.9},
-    {date:'2026-06-19',ctl:64.6,atl:52.4,hrv:50,hrvSDNN:54,restingHR:44,readiness:8.0,sleepSecs:28800,sleepScore:5,vo2max:50.9},
-    {date:'2026-06-20',ctl:67.3,atl:69.6,hrv:null,hrvSDNN:null,restingHR:44,readiness:null,sleepSecs:14040,sleepScore:47,vo2max:53},
+    {date:'2026-06-20',ctl:67.3,atl:69.6,restingHR:44,sleepSecs:14040,sleepScore:47,vo2max:53},
     {date:'2026-06-21',ctl:65.7,atl:60.4,hrv:41,hrvSDNN:43,restingHR:47,readiness:7.7,sleepSecs:28800,sleepScore:5,vo2max:50.9},
     {date:'2026-06-22',ctl:65.5,atl:59.5,hrv:30,hrvSDNN:74,restingHR:49,readiness:7.4,sleepSecs:28800,sleepScore:5,vo2max:50.9},
     {date:'2026-06-23',ctl:63.9,atl:51.6,hrv:32,hrvSDNN:39,restingHR:49,readiness:7.4,sleepSecs:28800,sleepScore:5,vo2max:50.9},
@@ -451,45 +462,72 @@ const ICU_SNAPSHOT = {
     {date:'2026-07-04',ctl:66.7,atl:78.4,hrv:36,hrvSDNN:63,restingHR:49,readiness:7.6,sleepSecs:28800,sleepScore:5,vo2max:50.7},
     {date:'2026-07-05',ctl:65.2,atl:67.9,hrv:70,hrvSDNN:65,restingHR:49,readiness:8.5,sleepSecs:28800,sleepScore:5,vo2max:50.6},
     {date:'2026-07-06',ctl:65.2,atl:67.8,hrv:26,hrvSDNN:38,restingHR:48,readiness:7.2,sleepSecs:28800,sleepScore:5,vo2max:50.6},
-    {date:'2026-07-07',ctl:65.5,atl:69.0,hrv:45,hrvSDNN:70,restingHR:48,readiness:7.9,sleepSecs:28800,sleepScore:5,vo2max:53},
+    {date:'2026-07-07',ctl:65.5,atl:69.0,hrv:45,hrvSDNN:70,restingHR:45,readiness:7.9,sleepSecs:28800,sleepScore:5,vo2max:53},
+    {date:'2026-07-08',ctl:65.2,atl:67.0,hrvSDNN:35,restingHR:48,sleepSecs:24720,sleepScore:73,vo2max:52},
+    {date:'2026-07-09',ctl:63.7,atl:58.1,hrvSDNN:51,restingHR:48,sleepSecs:26160,sleepScore:87},
+    {date:'2026-07-10',ctl:65.0,atl:66.2,restingHR:44,sleepSecs:19020,sleepScore:70,vo2max:53},
   ],
   acts: [
-    {id:'i163642511',date:'2026-07-07',name:'VO2max 5×4min — PMA (canicule)',kj:459,tss:77,np:190,dist:18.6,elev:450,ef:1.68,vi:1.57,dec:2.7,hr:113,hrmax:154,dur:'1h03',type:'A'},
-    {id:'i163161174',date:'2026-07-06',name:'Z2 reprise douce — transition S28',kj:798,tss:67,np:124,dist:50.4,elev:419,ef:1.31,vi:1.20,dec:-29.8,hr:95,hrmax:121,dur:'2h08',type:'Z2'},
-    {id:'i162587300',date:'2026-07-04',name:'Bort-les-Orgues',kj:1492,tss:194,np:162,dist:77.4,elev:1255,ef:1.47,vi:1.42,dec:24.9,hr:110,hrmax:156,dur:'3h39',type:'A'},
-    {id:'i162168068',date:'2026-07-02',name:'Sweet Spot 3×15min — Volume seuil',kj:665,tss:86,np:187,dist:32.5,elev:351,ef:1.61,vi:1.23,dec:-7.6,hr:116,hrmax:141,dur:'1h13',type:'SS'},
-    {id:'i161800096',date:'2026-07-01',name:'Bort-les-Orgues (récup)',kj:580,tss:47,np:122,dist:33.2,elev:363,ef:1.26,vi:1.17,dec:5.7,hr:97,hrmax:131,dur:'1h32',type:'R'},
-    {id:'i161773011',date:'2026-07-01',name:'Z2 Endurance 1h30 — Assimilation',kj:601,tss:55,np:149,dist:34.0,elev:336,ef:1.42,vi:1.10,dec:1.4,hr:105,hrmax:123,dur:'1h13',type:'Z2'},
-    {id:'i161566957',date:'2026-06-30',name:'Veyrières',kj:161,tss:16,np:136,dist:10.2,elev:103,ef:1.40,vi:1.30,dec:-35.4,hr:97,hrmax:122,dur:'0h25',type:'R'},
-    {id:'i161244208',date:'2026-06-29',name:'SS 2×20min — endurance seuil 1h',kj:772,tss:66,np:120,dist:51.1,elev:463,ef:1.48,vi:1.26,dec:-1.6,hr:81,hrmax:128,dur:'2h15',type:'SS'},
-    {id:'i161056308',date:'2026-06-28',name:'Veyrières',kj:518,tss:49,np:142,dist:30.6,elev:299,ef:1.29,vi:1.18,dec:-7.5,hr:110,hrmax:129,dur:'1h11',type:'R'},
-    {id:'i160702370',date:'2026-06-27',name:'Veyrières - Sweet Spot 2×20 — sortie club',kj:1400,tss:165,np:152,dist:74.2,elev:1134,ef:1.43,vi:1.39,dec:1.1,hr:106,hrmax:149,dur:'3h32',type:'SS'},
+    {id:'i164376486',date:'2026-07-10',name:'Sweet Spot 3×16 mn — endurance seuil (réalisé 4×16)',kj:918,tss:119,np:188,dist:46.2,elev:446,ef:1.61,vi:1.22,dec:1.56,hr:117,hrmax:141,dur:'1h39',type:'SS'},
+    {id:'i163944684',date:'2026-07-08',name:'Veyrières',kj:555,tss:54,np:147,dist:30.7,elev:308,ef:1.39,vi:1.18,dec:-1.89,hr:106,hrmax:124,dur:'1h14',type:'Z2'},
+    {id:'i163642511',date:'2026-07-07',name:'VO2max 5×4min — PMA (permuté)',kj:459,tss:77,np:190,dist:18.6,elev:450,ef:1.68,vi:1.57,dec:2.74,hr:113,hrmax:154,dur:'1h03',type:'A'},
+    {id:'i163161174',date:'2026-07-06',name:'Z2 reprise douce — transition S28',kj:798,tss:67,np:124,dist:50.4,elev:419,ef:1.31,vi:1.20,dec:-29.82,hr:95,hrmax:121,dur:'2h08',type:'Z2'},
+    {id:'i162587300',date:'2026-07-04',name:'Bort-les-Orgues',kj:1492,tss:194,np:162,dist:77.4,elev:1255,ef:1.47,vi:1.42,dec:24.90,hr:110,hrmax:156,dur:'3h39',type:'A'},
+    {id:'i162168068',date:'2026-07-02',name:'Sweet Spot 3×15min — Volume seuil',kj:665,tss:86,np:187,dist:32.5,elev:351,ef:1.61,vi:1.23,dec:-7.57,hr:116,hrmax:141,dur:'1h13',type:'SS'},
+    {id:'i161800096',date:'2026-07-01',name:'Bort-les-Orgues',kj:580,tss:47,np:122,dist:33.2,elev:363,ef:1.26,vi:1.17,dec:5.73,hr:97,hrmax:131,dur:'1h32',type:'R'},
+    {id:'i161773011',date:'2026-07-01',name:'Z2 Endurance 1h30 — Assimilation',kj:601,tss:55,np:149,dist:34.0,elev:336,ef:1.42,vi:1.10,dec:1.41,hr:105,hrmax:123,dur:'1h13',type:'Z2'},
+    {id:'i161566957',date:'2026-06-30',name:'Veyrières',kj:161,tss:16,np:136,dist:10.2,elev:103,ef:1.40,vi:1.30,dec:-35.38,hr:97,hrmax:122,dur:'0h25',type:'R'},
+    {id:'i161244208',date:'2026-06-29',name:'SS 2×20min — endurance seuil 1h',kj:772,tss:66,np:120,dist:51.1,elev:463,ef:1.48,vi:1.26,dec:-1.61,hr:81,hrmax:128,dur:'2h15',type:'SS'},
   ]
 };
+
+// ═══════════════════════════════════════════════════════════════════
+//  APPEL API ANTHROPIC — direct, sans MCP (données dans system prompt)
+// ═══════════════════════════════════════════════════════════════════
+async function callAI(messages, system, maxTokens = 1000) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      system: system || buildCtx(),
+      messages
+    })
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`API ${res.status}: ${err.slice(0,150)}`);
+  }
+  return res.json();
+}
+
+function extractText(data) {
+  if (!data || !data.content) return '';
+  return data.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+}
 
 // ═══════════════════════════════════════════════════════════════════
 //  INIT — tente le serveur local, fallback sur snapshot embarqué
 // ═══════════════════════════════════════════════════════════════════
 async function init() {
   setStatus('sync');
-  document.getElementById('sync-info').textContent = 'Connexion ICU (Worker Cloudflare)…';
-
-  const WORKER_URL = 'https://patient-flower-4cb6.jeangay1961.workers.dev/all';
+  document.getElementById('sync-info').textContent = 'Connexion ICU…';
 
   try {
-    const res = await fetch(WORKER_URL, { signal: AbortSignal.timeout(10000) });
-    if (!res.ok) throw new Error('Worker error ' + res.status);
+    const res = await fetch('http://localhost:8765/all', { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) throw new Error('server error');
     const raw = await res.json();
     loadFromRaw(raw);
     setStatus('ok');
     const now = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-    document.getElementById('sync-info').textContent = `ICU live ${now} · via Worker Cloudflare`;
+    document.getElementById('sync-info').textContent = `ICU live ${now} · Serveur local actif`;
   } catch(e) {
-    // Fallback snapshot embarqué (Worker injoignable, cold start trop long, ou hors-ligne)
+    // Fallback snapshot embarqué
     loadFromSnapshot();
-    setStatus('err');
+    setStatus('snap');
     document.getElementById('sync-info').textContent =
-      `Snapshot ${ICU_SNAPSHOT.generated} · Worker injoignable (${e.message}) — vérifie la connexion`;
+      `Snapshot ${ICU_SNAPSHOT.generated} · Démarrer server.py pour données live`;
   }
 
   document.getElementById('hsub').textContent =
@@ -538,7 +576,7 @@ function loadFromRaw(raw) {
 
   // ── Activités ─────────────────────────────────────────────────
   if (raw.activities && Array.isArray(raw.activities)) {
-    const rides = raw.activities.filter(a => a.type === 'Ride' || a.type === 'VirtualRide');
+    const rides = raw.activities.filter(a => a.type === 'Ride');
     S.acts = rides.slice(0, 10).map(a => ({
       id:    a.id,
       date:  a.start_date_local?.split('T')[0],
@@ -587,44 +625,66 @@ function guessType(a) {
   return 'R';
 }
 
+// ═══════════════════════════════════════════════════════════════════
+//  FIX 10/07/2026 — bug "titres figés / kJ décalés d'un jour"
+//  Cause : isoWeekRange()/day2iso() construisaient les dates en heure
+//  locale puis les convertissaient en UTC via toISOString(), ce qui
+//  fait reculer la date d'un jour en été (UTC+2). Résultat : le kJ
+//  d'une sortie s'accrochait au jour précédent, et recalcBlocsKJ() ne
+//  mettait jamais à jour le libellé (day.lab) ni le type (day.type) —
+//  seul le chiffre kJ (day.r) était rafraîchi, d'où des titres figés
+//  ("À planifier") pendant que les kJ changeaient.
+//  Correctif : calculs 100% en UTC + mise à jour de lab/type.
+// ═══════════════════════════════════════════════════════════════════
+function isoWeekRange(week, year) {
+  // Lundi de la semaine ISO — calcul entièrement en UTC
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const dow = jan4.getUTCDay() || 7;
+  const mon = new Date(jan4);
+  mon.setUTCDate(jan4.getUTCDate() - dow + 1 + (week - 1) * 7);
+  const sun = new Date(mon);
+  sun.setUTCDate(mon.getUTCDate() + 6);
+  return [mon.toISOString().split('T')[0], sun.toISOString().split('T')[0]];
+}
+
+function day2iso(label, isoWeek) {
+  // Convertit "Lun 08" en "2026-06-08" — ancrage explicite en UTC
+  const m = label.match(/(\d+)$/);
+  if (!m) return null;
+  const [d1] = isoWeekRange(isoWeek, 2026);
+  const mon = new Date(d1 + 'T00:00:00Z');
+  const days = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  const dow = days.findIndex(d => label.startsWith(d));
+  if (dow < 0) return null;
+  const target = new Date(mon);
+  target.setUTCDate(mon.getUTCDate() + dow);
+  return target.toISOString().split('T')[0];
+}
+
 function recalcBlocsKJ(rides) {
-  // Recalcule les KJ réels de chaque bloc ISO depuis les activités live
+  // Recalcule les KJ réels ET les libellés de chaque bloc ISO depuis les activités live
   BLOCS.forEach(b => {
     const [d1, d2] = isoWeekRange(b.iso, 2026);
     const sum = rides
       .filter(a => { const d = a.start_date_local?.split('T')[0]; return d >= d1 && d <= d2; })
       .reduce((s, a) => s + Math.round((a.icu_joules || 0) / 1000), 0);
     if (sum > 0) b.reel = sum;
-    // Mettre à jour aussi les jours individuels
+    // Mettre à jour les jours individuels : kJ + libellé + type
     b.days.forEach(day => {
       const iso = day2iso(day.j, b.iso);
       if (!iso) return;
-      const ride = rides.find(a => a.start_date_local?.startsWith(iso));
-      if (ride) day.r = Math.round((ride.icu_joules || 0) / 1000);
+      const dayRides = rides.filter(a => a.start_date_local?.startsWith(iso));
+      if (dayRides.length) {
+        const kjTotal = dayRides.reduce((s, a) => s + Math.round((a.icu_joules || 0) / 1000), 0);
+        day.r = kjTotal;
+        day.lab = dayRides.length > 1
+          ? `${dayRides[0].name} (+${dayRides.length - 1})`
+          : dayRides[0].name;
+        day.type = guessType(dayRides.reduce((biggest, a) =>
+          (a.icu_joules || 0) > (biggest.icu_joules || 0) ? a : biggest, dayRides[0]));
+      }
     });
   });
-}
-
-function isoWeekRange(week, year) {
-  // Lundi de la semaine ISO
-  const jan4 = new Date(year, 0, 4);
-  const mon = new Date(jan4);
-  mon.setDate(jan4.getDate() - (jan4.getDay() || 7) + 1 + (week - 1) * 7);
-  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-  return [mon.toISOString().split('T')[0], sun.toISOString().split('T')[0]];
-}
-
-function day2iso(label, isoWeek) {
-  // Convertit "Lun 08" en "2026-06-08"
-  const m = label.match(/(\d+)$/);
-  if (!m) return null;
-  const [d1] = isoWeekRange(isoWeek, 2026);
-  const mon = new Date(d1);
-  const days = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
-  const dow = days.findIndex(d => label.startsWith(d));
-  if (dow < 0) return null;
-  const target = new Date(mon); target.setDate(mon.getDate() + dow);
-  return target.toISOString().split('T')[0];
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -634,8 +694,7 @@ function T(id, btn) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
-  const target = btn || document.querySelector(`.nb[onclick*="T('${id}'"]`);
-  if (target) target.classList.add('active');
+  btn.classList.add('active');
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -691,7 +750,6 @@ function renderJauge() {
     : ''
   ).join('');
 
-  // Marqueur cible à 100%
   // Tableau jour par jour
   const rowsHtml = segments.map((s, i) => {
     const label = s.d.j;
@@ -710,7 +768,7 @@ function renderJauge() {
           : `<span style="position:absolute;left:7px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--hi)">${s.d.lab}</span>`}
       </div>
       <span style="font-size:11px;width:52px;text-align:right;flex-shrink:0;${style}">
-        ${s.kj > 0 ? s.kj.toLocaleString('fr-FR') + ' kJ' : s.isFuture ? '—' : 'Repos'}
+        ${s.kj > 0 ? s.kj.toLocaleString('fr-FR') + ' kJ' : s.d.r === 0 ? 'Repos' : (s.isFuture ? '—' : '—')}
       </span>
     </div>`;
   }).join('');
@@ -783,7 +841,7 @@ function renderDash() {
     <div class="mc"><div class="ml">CTL</div><div class="mv">${parseFloat(ctl).toFixed(0)}<span class="mu2"> TSS</span></div><div class="md up">Forme de fond</div></div>
     <div class="mc"><div class="ml">ATL</div><div class="mv ${S.atl>80?'dn':''}">${parseFloat(atl).toFixed(0)}<span class="mu2"> TSS</span></div><div class="md ${S.atl>80?'dn':''}">${S.atl>80?'Élevée':'Modérée'}</div></div>
     <div class="mc"><div class="ml">TSB</div><div class="mv" style="color:${S.tsb<-10?'var(--coral)':S.tsb>5?'var(--green)':'var(--text)'}">${tsb}</div><div class="md">${S.tsb<-10?'Fatigue':S.tsb>5?'Forme':'Neutre'}</div></div>
-    <div class="mc"><div class="ml">HRV matin</div><div class="mv ${hrv<35?'dn':hrv>50?'up':'wn'}">${hrv}<span class="mu2"> ms</span></div><div class="md">${hrv<35?'⚠ Bas':hrv>50?'✓ Bon':'Moyen'}</div></div>
+    <div class="mc"><div class="ml">HRV matin</div><div class="mv ${hrv<35?'dn':hrv>50?'up':'wn'}">${hrv}<span class="mu2"> ms</span></div><div class="md">${hrv==='—'?'Non loggée':hrv<35?'⚠ Bas':hrv>50?'✓ Bon':'Moyen'}</div></div>
     <div class="mc"><div class="ml">HR repos</div><div class="mv ${restHR>55?'dn':restHR<50?'up':'wn'}">${restHR}<span class="mu2"> bpm</span></div><div class="md">${restHR>55?'⚠ Élevé':restHR<50?'Excellent':'OK'}</div></div>
     <div class="mc"><div class="ml">VO2max est.</div><div class="mv">${vo2}<span class="mu2"> ml</span></div><div class="md">Garmin</div></div>
     <div class="mc"><div class="ml">Poids</div><div class="mv">${S.weight}<span class="mu2"> kg</span></div><div class="md">Obj. 67 kg</div></div>`;
@@ -914,7 +972,7 @@ function renderMMPAnalysis() {
       </div>`;
     }).join('')}
     <div style="background:var(--al);border-radius:var(--rs);padding:10px;margin-top:12px;font-size:12px;color:var(--ad);line-height:1.7">
-      <strong>Priorités S26 :</strong> 1) SS long 3×15–20min → combler lacune 1h. 2) VO2max 5×4min → PMA 5min. 3) Anaérobie court : 2-3 séances/mois max à 64 ans.
+      <strong>Priorités S29→S30 :</strong> après le deload, 1) SS long 3×15–20min → combler lacune 1h. 2) VO2max 5×4-6min → PMA 5min. 3) Anaérobie court : 2-3 séances/mois max à 64 ans.
     </div>`;
 }
 
@@ -1166,8 +1224,8 @@ function selectBloc(idx) {
              : `Déficit de ${Math.abs(globalDelta)} kJ — analyser le TSB avant d'ajuster S${b.iso+1}.`}
          </div>` : ''}
     <button class="bs" style="margin-top:8px;width:100%;justify-content:center;gap:6px"
-      onclick='askCoach(${JSON.stringify(analyseQ)})'>
-      <i class="ti ti-robot" style="font-size:13px"></i> Analyse poussée de ce bloc (Coach IA)
+      onclick="navigator.clipboard.writeText(${JSON.stringify(analyseQ)}).then(()=>{window.open(CLAUDE_PROJECT_URL,'_blank');showToast('Contexte copié · Colle dans Claude ⌘V')}).catch(()=>window.open(CLAUDE_PROJECT_URL,'_blank'))">
+      <i class="ti ti-robot" style="font-size:13px"></i> Analyse poussée de ce bloc dans Claude ↗
     </button>`;
 }
 
@@ -1175,12 +1233,18 @@ function selectBloc(idx) {
 //  SÉANCES
 // ═══════════════════════════════════════════════════════════════════
 function renderSeances() {
+  const bloc = BLOCS.find(b => b.current) || BLOCS[BLOCS.length - 1];
   const tsb = S.tsb ? Math.round(S.tsb) : '?';
   const sal = document.getElementById('seances-alert');
-  sal.textContent = `S${S.weekNum} récupération — TSB = ${tsb}. Programme allégé obligatoire.`;
-  sal.className = 'al ai';
+  if (bloc.type === 'recup') {
+    sal.textContent = `S${S.weekNum} récupération — TSB = ${tsb}. Programme allégé obligatoire.`;
+    sal.className = 'al ai';
+  } else {
+    sal.textContent = `S${S.weekNum} ${bloc.ordre} — TSB = ${tsb}. Fin de bloc charge avant S29 (deload).`;
+    sal.className = 'al aw';
+  }
   document.getElementById('s-weeknum').textContent = S.weekNum;
-  document.getElementById('seances-list').innerHTML = SEANCES_S25.map(s => `
+  document.getElementById('seances-list').innerHTML = SEANCES_CURRENT.map(s => `
     <div class="card" data-type="${s.type}" style="margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
         <div><div style="font-size:14px;font-weight:500">${s.day} — ${s.title}</div>
@@ -1231,7 +1295,7 @@ function renderSante() {
     <div class="sante-mc">
       <div class="sante-score" style="color:${hrv<35?'var(--coral)':hrv>50?'var(--green)':'var(--amber)'}">${hrv}</div>
       <div class="sante-label">HRV RMSSD</div>
-      <div class="sante-sub" style="color:${hrv<35?'var(--red)':hrv>50?'var(--green)':'var(--amber)'}">${hrv<35?'⚠ Bas':hrv>50?'✓ Bon':'Moyen'}</div>
+      <div class="sante-sub" style="color:${hrv<35?'var(--red)':hrv>50?'var(--green)':'var(--amber)'}">${hrv==='—'?'Non loggée':hrv<35?'⚠ Bas':hrv>50?'✓ Bon':'Moyen'}</div>
     </div>
     <div class="sante-mc">
       <div class="sante-score" style="color:${restHR>55?'var(--coral)':restHR<50?'var(--green)':'var(--text)'}">${restHR}</div>
@@ -1241,7 +1305,7 @@ function renderSante() {
     <div class="sante-mc">
       <div class="sante-score">${sleep}</div>
       <div class="sante-label">Sommeil</div>
-      <div class="sante-sub">Score ${lastSleep?.sleepScore??'—'}/10</div>
+      <div class="sante-sub">Score ${lastSleep?.sleepScore??'—'}/100</div>
     </div>
     <div class="sante-mc">
       <div class="sante-score" style="color:var(--blue)">${vo2}</div>
@@ -1265,6 +1329,9 @@ function renderSante() {
     sal.innerHTML = `<div class="al ad2"><strong>HRV RMSSD ${hrv} ms — alerte récupération.</strong> Système nerveux autonome en sous-régime. Repos ou Z1 ≤30 min uniquement.</div>`;
   } else if (restHR !== '—' && restHR > 55) {
     sal.innerHTML = `<div class="al aw"><strong>HR repos ${restHR} bpm — élevé.</strong> +${restHR-48} bpm vs baseline 48 bpm. Vérifier hydratation, stress, début de maladie.</div>`;
+  } else if (lastSleep && lastSleep.sleepSecs && lastSleep.sleepSecs < 21600) {
+    const h = Math.floor(lastSleep.sleepSecs/3600), m = Math.round((lastSleep.sleepSecs%3600)/60);
+    sal.innerHTML = `<div class="al aw"><strong>Sommeil ${h}h${m.toString().padStart(2,'0')} — nuit courte.</strong> Bien en dessous des ~8h habituelles. Facteur à surveiller avant toute séance de qualité aujourd'hui.</div>`;
   } else {
     sal.innerHTML = '';
   }
@@ -1328,14 +1395,16 @@ function buildCtx() {
   const w = S.wellness.length
     ? [...S.wellness].sort((a,b)=>b.date.localeCompare(a.date))[0]
     : {};
+  const bloc = BLOCS.find(b => b.current) || BLOCS[BLOCS.length - 1];
   return `Tu es VeloCoach AI, expert cyclisme pour Jean Gay (64 ans, 69 kg, FTP ${S.eftp||222}W, eFTP ${S.eftp||222}W, Cube, Veyrières/Auvergne).
 
 DONNÉES LIVE aujourd'hui ${new Date().toLocaleDateString('fr-FR')} :
-- CTL = ${S.ctl?S.ctl.toFixed(1):'68'}, ATL = ${S.atl?S.atl.toFixed(1):'75'}, TSB = ${S.tsb?S.tsb.toFixed(1):'-7'} (${S.tsb&&S.tsb<-5?'FATIGUE':'NEUTRE'})
+- Semaine S${S.weekNum} — ${bloc.ordre} (${bloc.type==='recup'?'récupération':'charge'})
+- CTL = ${S.ctl?S.ctl.toFixed(1):'65'}, ATL = ${S.atl?S.atl.toFixed(1):'66'}, TSB = ${S.tsb?S.tsb.toFixed(1):'-1'} (${S.tsb&&S.tsb<-5?'FATIGUE':'NEUTRE'})
 - HRV RMSSD = ${w.hrv||'?'} ms · SDNN = ${w.hrvSDNN||'?'} ms
 - HR repos = ${w.restingHR||'?'} bpm · Readiness = ${w.readiness||'?'}/10
 - VO2max estimée = ${w.vo2max||'~51'} ml/kg/min
-- Sommeil = ${w.sleepSecs?Math.floor(w.sleepSecs/3600)+'h'+Math.round((w.sleepSecs%3600)/60)+'min':'?'} · Score ${w.sleepScore||'?'}
+- Sommeil = ${w.sleepSecs?Math.floor(w.sleepSecs/3600)+'h'+Math.round((w.sleepSecs%3600)/60).toString().padStart(2,'0'):'?'} · Score ${w.sleepScore||'?'}
 
 PROFIL PUISSANCE (MMP ICU) :
 706W@1s · 266W@1min · 244W@5min · 233W@20min · 168W@1h · 150W@2h
@@ -1343,7 +1412,7 @@ Lacunes vs profil FTP 222W équilibré : 1h −16% · PMA 5min −12% · Anaéro
 Forces : Sprint +5% · Seuil 20min calibré · 10min solide
 
 CYCLE BLOCS :
-S21 charge 1/3 (réel 3 270 kJ) · S22 C2/3 (4 600) · S23 C3/3 (5 071, +333) · S24 C4 (prévue 4 880) · S25 RÉCUP EN COURS (cible 3 200 kJ)
+S26 charge C1/3 (4 079 kJ) · S27 C2/3 (4 271 kJ) · S28 C3/3 PIC PRÉ-DELOAD EN COURS (cible 4 900 kJ) · S29 DELOAD (cible ~2 400 kJ, zéro intensité)
 
 DERNIÈRE SORTIE : ${S.acts[0]?`${S.acts[0].name} ${S.acts[0].date} · ${S.acts[0].dist}km · NP ${S.acts[0].np}W · TSS ${S.acts[0].tss}`:'N/A'}
 
@@ -1378,7 +1447,7 @@ Syntaxe description ICU (% du FTP ${S.eftp||222}W) :
 Les % sont calculés sur FTP ${S.eftp||222}W. Ex: 88% = ${Math.round((S.eftp||222)*0.88)}W, 94% = ${Math.round((S.eftp||222)*0.94)}W, 110% = ${Math.round((S.eftp||222)*1.10)}W.`;
 }
 
-function generateAutoCoach() {
+async function generateAutoCoach() {
   const el = document.getElementById('coach-auto');
   const today = new Date().toLocaleDateString('fr-FR', {weekday:'long',day:'numeric',month:'long'});
   document.getElementById('coach-date-label').textContent = `Analyse du ${today}`;
@@ -1386,29 +1455,32 @@ function generateAutoCoach() {
   const w = S.wellness.length
     ? [...S.wellness].sort((a,b)=>b.date.localeCompare(a.date))[0]
     : {};
-  const tsb = S.tsb != null ? Math.round(S.tsb) : '?';
-  const hrv = w.hrv ?? '?';
-  const hr = w.restingHR ?? '?';
-  const eftp = S.eftp || 219;
+  const bloc = BLOCS.find(b => b.current) || BLOCS[BLOCS.length - 1];
 
-  let bilan;
-  if (S.tsb != null && S.tsb < -10) {
-    bilan = `TSB bas (${tsb}) — fatigue accumulée. Repos ou Z1 léger prioritaire aujourd'hui.`;
-  } else if (S.tsb != null && S.tsb > 5) {
-    bilan = `TSB favorable (${tsb}) — bonne fenêtre pour une séance de qualité si HRV/readiness suivent.`;
-  } else {
-    bilan = `TSB neutre (${tsb}) — état intermédiaire, se fier au HRV et au ressenti du jour.`;
+  try {
+    const data = await callAI([{
+      role:'user',
+      content:`Bilan du jour S${S.weekNum} (${bloc.ordre}) :
+- CTL=${S.ctl?S.ctl.toFixed(1):'65'}, ATL=${S.atl?S.atl.toFixed(1):'66'}, TSB=${S.tsb?S.tsb.toFixed(1):'-1'}
+- HRV=${w.hrv||'?'} ms, HR repos=${w.restingHR||'?'} bpm, Sommeil=${w.sleepSecs?Math.floor(w.sleepSecs/3600)+'h'+Math.round((w.sleepSecs%3600)/60):'?'}
+Analyse : état de récupération, risques à surveiller, recommandation précise pour aujourd'hui et pour les 3 prochains jours (fin de pic S28 puis entrée en deload S29).
+Format : sections courtes avec emoji, chiffres précis, explication physiologique en 1-2 phrases max par point.`
+    }], buildCtx(), 900);
+    const text = extractText(data);
+    el.textContent = text || 'Analyse indisponible.';
+  } catch(e) {
+    const tsb = S.tsb ? Math.round(S.tsb) : '?';
+    const hrv = S.wellness[0]?.hrv || '?';
+    const hr = S.wellness[0]?.restingHR || '?';
+    el.textContent = `S${S.weekNum} — ${bloc.ordre}\n\n📊 TSB = ${tsb} · HR repos = ${hr} bpm\n\nFin de bloc de charge, S29 arrive en deload complet la semaine prochaine. La priorité est de boucler le pic proprement sans accumuler de fatigue non planifiée.\n\n💡 Aujourd'hui : si HR repos >55 bpm ou nuit courte → alléger la séance prévue.\n\n🎯 Cette semaine : terminer le pic S28, puis S29 = zéro intensité, repos = progression.`;
   }
-
-  el.textContent = `S${S.weekNum} — ${bilan}\n\n📊 CTL ${S.ctl?S.ctl.toFixed(1):'?'} · ATL ${S.atl?S.atl.toFixed(1):'?'} · HRV ${hrv} ms · HR repos ${hr} bpm\n⚡ eFTP ${eftp}W · ${(eftp/S.weight).toFixed(2)} w/kg\n\n💡 Pour une analyse approfondie et personnalisée, utilise les questions rapides ci-dessous ou le champ de saisie — elles s'ouvrent dans ton projet Claude dédié avec tout le contexte ICU du jour.`;
 }
 
-// askCoach() copie le contexte ICU + la question dans le presse-papier et
-// ouvre le projet Claude dédié — pas d'appel direct à l'API Anthropic
-// depuis le widget (CORS + clé exposée côté client = non souhaité).
+// ─── URL du projet Claude ───
 const CLAUDE_PROJECT_URL = 'https://claude.ai/project/019ea391-88cd-72a7-b273-31d429527e07';
 
 function askCoach(q) {
+  // Construit un message complet avec le contexte ICU + la question
   const w = S.wellness.length
     ? [...S.wellness].sort((a,b)=>b.date.localeCompare(a.date))[0]
     : {};
@@ -1416,11 +1488,13 @@ function askCoach(q) {
     `[VeloCoach AI — contexte automatique ${new Date().toLocaleDateString('fr-FR')}]`,
     `CTL ${S.ctl?S.ctl.toFixed(1):'?'} · ATL ${S.atl?S.atl.toFixed(1):'?'} · TSB ${S.tsb?S.tsb.toFixed(1):'?'}`,
     `HRV ${w.hrv||'?'} ms · HR repos ${w.restingHR||'?'} bpm · Readiness ${w.readiness||'?'}/10`,
-    `eFTP ${S.eftp||219}W · ${((S.eftp||219)/S.weight).toFixed(2)} w/kg · S${S.weekNum}`,
+    `eFTP ${S.eftp||222}W · ${((S.eftp||222)/S.weight).toFixed(2)} w/kg · S${S.weekNum}`,
     `Dernière sortie : ${S.acts[0]?S.acts[0].name+' '+S.acts[0].date+' · '+S.acts[0].kj+' kJ · TSS '+S.acts[0].tss:'—'}`,
     ``,
     q
   ].join('\n');
+  // Ouvre le projet Claude avec le message pré-rempli dans le champ texte
+  // Note : claude.ai ne supporte pas ?q= en URL, on copie dans le presse-papier
   navigator.clipboard.writeText(ctx).then(() => {
     window.open(CLAUDE_PROJECT_URL, '_blank');
     showToast('Contexte copié · Colle-le dans Claude ⌘V');
@@ -1444,35 +1518,86 @@ function showToast(msg) {
   t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
 }
 
-function sendChat() {
+async function sendChat() {
   const inp = document.getElementById('coach-input');
   const q = inp.value.trim();
   if (!q) return;
   inp.value = '';
-  askCoach(q);
+  inp.disabled = true;
+
+  const hist = document.getElementById('chat-history');
+  hist.innerHTML += `<div class="msg mu3"><div class="mb2">${q.replace(/</g,'&lt;')}</div></div>`;
+  const lid = 'l' + Date.now();
+  hist.innerHTML += `<div class="msg mai" id="${lid}"><div class="mb2"><span class="ct">…</span></div></div>`;
+  hist.scrollTop = hist.scrollHeight;
+
+  S.chatHistory.push({role:'user', content:q});
+
+  try {
+    const data = await callAI(S.chatHistory.slice(-8), buildCtx(), 1200);
+    const ans  = extractText(data) || 'Erreur.';
+    S.chatHistory.push({role:'assistant', content:ans});
+
+    // Détecter un bloc JSON icu_workout dans la réponse
+    const workout = extractWorkout(ans);
+    const cleanAns = ans.replace(/```[\s\S]*?```/g, '').trim();
+
+    const msgEl = document.getElementById(lid).querySelector('.mb2');
+    msgEl.textContent = cleanAns;
+
+    // Bouton "Envoyer sur ICU" si une séance structurée est détectée
+    if (workout) {
+      const btn = document.createElement('button');
+      btn.className = 'bp';
+      btn.style.cssText = 'margin-top:10px;font-size:12px;padding:7px 14px';
+      btn.innerHTML = '<i class="ti ti-calendar-plus"></i> Envoyer sur ICU';
+      btn.onclick = () => sendToICU(workout, btn);
+      document.getElementById(lid).querySelector('.mb2').after(btn);
+    }
+  } catch(e) {
+    document.getElementById(lid).querySelector('.mb2').textContent = 'Erreur de connexion.';
+  }
+  inp.disabled = false;
+  inp.focus();
+  hist.scrollTop = hist.scrollHeight;
 }
 
-// Envoyer la séance sur ICU via le Worker Cloudflare (/workout)
+// Extraire un bloc icu_workout du texte de réponse
+function extractWorkout(text) {
+  // Cherche ```json ... ``` avec un champ icu_workout
+  const m = text.match(/```(?:json)?\s*(\{[\s\S]*?"icu_workout"[\s\S]*?\})\s*```/i);
+  if (m) {
+    try { return JSON.parse(m[1]).icu_workout || JSON.parse(m[1]); } catch(_) {}
+  }
+  // Cherche directement { "icu_workout": ... }
+  const m2 = text.match(/\{\s*"icu_workout"\s*:([\s\S]*?)\}/);
+  if (m2) {
+    try { return JSON.parse('{' + '"icu_workout":' + m2[1] + '}').icu_workout; } catch(_) {}
+  }
+  return null;
+}
+
+// Envoyer la séance sur ICU via server.py
 async function sendToICU(workout, btn) {
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-loader" style="animation:spin .7s linear infinite"></i> Envoi…';
   try {
-    const res = await fetch('https://patient-flower-4cb6.jeangay1961.workers.dev/workout', {
+    const res = await fetch('http://localhost:8765/workout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(workout),
-      signal: AbortSignal.timeout(10000)
+      signal: AbortSignal.timeout(8000)
     });
     const data = await res.json();
-    if (res.ok && (data.id || data.icu_workout_uploaded)) {
+    if (data.ok) {
       btn.innerHTML = '<i class="ti ti-check"></i> Ajouté au calendrier ICU !';
       btn.style.background = 'var(--green)';
       showToast('✓ Séance envoyée sur Intervals.icu · Sync Garmin dans ~1min');
     } else {
-      throw new Error(data.message || data.error || `HTTP ${res.status}`);
+      throw new Error(data.error || 'Erreur ICU');
     }
   } catch(e) {
-    btn.innerHTML = '<i class="ti ti-alert-triangle"></i> Échec envoi ICU';
+    btn.innerHTML = '<i class="ti ti-alert-triangle"></i> Échec — server.py actif ?';
     btn.style.background = 'var(--red)';
     btn.disabled = false;
     showToast('Erreur : ' + e.message);
